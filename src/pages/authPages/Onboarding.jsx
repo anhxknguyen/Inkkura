@@ -2,6 +2,7 @@ import React, { useState, useEffect, useLayoutEffect } from "react";
 import logo from "../../assets/logo.png";
 import { Link, useNavigate } from "react-router-dom";
 import { UserAuth } from "../../context/authContext";
+import { useUserData } from "../../context/userDataContext";
 import { db } from "../../firebase";
 import {
   collection,
@@ -16,7 +17,7 @@ import {
 const Onboarding = () => {
   const { user } = UserAuth();
   const [displayName, setDisplayName] = useState("");
-  const [userData, setUserData] = useState({});
+  const { userData } = useUserData();
   const navigate = useNavigate();
   const [error, setError] = useState("");
 
@@ -25,23 +26,6 @@ const Onboarding = () => {
       navigate("/");
     }
   }, [userData]);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        if (user && user.uid) {
-          const docRef = doc(collection(db, "users"), user.uid);
-          const docSnap = await getDoc(docRef);
-          if (docSnap.exists()) {
-            setUserData(docSnap.data());
-          }
-        }
-      } catch (error) {
-        console.log(error.message);
-      }
-    };
-    fetchData();
-  }, [user]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -103,11 +87,7 @@ const Onboarding = () => {
               />
               {error && (
                 <p className="text-sm text-red-500">
-                  {error && (
-                    <p className="text-sm text-red-500">
-                      Error: {getErrorMsg(error)}
-                    </p>
-                  )}
+                  Error: {getErrorMsg(error)}
                 </p>
               )}
             </div>
@@ -132,7 +112,7 @@ const Onboarding = () => {
 const getErrorMsg = (error) => {
   switch (error) {
     case "display-name-exists":
-      return "This name already exists.";
+      return "Sorry, this name is already taken.";
     case "display-name-empty":
       return "Display name cannot be empty.";
     default:

@@ -4,6 +4,7 @@ import { UserAuth } from "../context/authContext";
 import { useLocation } from "react-router-dom";
 import { db } from "../firebase";
 import { collection, updateDoc, doc, getDoc } from "firebase/firestore";
+import { useUserData } from "../context/userDataContext";
 
 const Navbar = () => {
   const { user, logout } = UserAuth();
@@ -11,24 +12,7 @@ const Navbar = () => {
   const { pathname } = location;
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef(null);
-  const [userData, setUserData] = useState({});
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        if (user && user.uid) {
-          const docRef = doc(collection(db, "users"), user.uid);
-          const docSnap = await getDoc(docRef);
-          if (docSnap.exists()) {
-            setUserData(docSnap.data());
-          }
-        }
-      } catch (error) {
-        console.log(error.message);
-      }
-    };
-    fetchData();
-  }, [user]);
+  const { userData } = useUserData();
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -74,7 +58,7 @@ const Navbar = () => {
                 type="button"
                 className="px-4 py-2 border rounded min-w-32 bg-zinc-100 hover:bg-zinc-200"
               >
-                {userData.displayName ? userData.displayName : user.email}
+                {userData.displayName || user.email}
               </button>
               {showDropdown && (
                 <ul className="absolute w-full bg-white border rounded top-full">

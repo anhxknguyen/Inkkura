@@ -6,27 +6,30 @@ import Signup from "./pages/authPages/Signup";
 import Onboarding from "./pages/authPages/Onboarding";
 import { AuthContextProvider } from "./context/authContext";
 import ProtectedRoute from "./pages/ProtectedRoute";
+import { UserDataProvider } from "./context/userDataContext";
 
 const App = () => {
   return (
     <AuthContextProvider>
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/signin" element={<Signin />} />
-        <Route path="/signup" element={<Signup />} />
-        <Route
-          path="onboarding"
-          element={
-            <ProtectedRoute>
-              <Onboarding />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/accsettings"
-          element={<ProtectedRoute></ProtectedRoute>}
-        />
-      </Routes>
+      <UserDataProvider>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/signin" element={<Signin />} />
+          <Route path="/signup" element={<Signup />} />
+          <Route
+            path="onboarding"
+            element={
+              <ProtectedRoute>
+                <Onboarding />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/accsettings"
+            element={<ProtectedRoute></ProtectedRoute>}
+          />
+        </Routes>
+      </UserDataProvider>
     </AuthContextProvider>
   );
 };
