@@ -1,8 +1,7 @@
-// UserDataContext.js
 import React, { createContext, useContext, useState, useEffect } from "react";
+import { UserAuth } from "./authContext";
 import { db } from "../firebase";
 import { doc, getDoc } from "firebase/firestore";
-import { UserAuth } from "./authContext";
 
 const UserDataContext = createContext();
 
@@ -27,8 +26,15 @@ export const UserDataProvider = ({ children }) => {
     fetchUserData();
   }, [user]);
 
+  const updateUserData = (newData) => {
+    setUserData((prevData) => ({
+      ...prevData,
+      ...newData,
+    }));
+  };
+
   return (
-    <UserDataContext.Provider value={{ userData }}>
+    <UserDataContext.Provider value={{ userData, updateUserData }}>
       {children}
     </UserDataContext.Provider>
   );

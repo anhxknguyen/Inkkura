@@ -17,7 +17,7 @@ import {
 const Onboarding = () => {
   const { user } = UserAuth();
   const [displayName, setDisplayName] = useState("");
-  const { userData } = useUserData();
+  const { userData, updateUserData } = useUserData();
   const navigate = useNavigate();
   const [error, setError] = useState("");
 
@@ -27,14 +27,13 @@ const Onboarding = () => {
     }
   }, [userData]);
 
-  const handleSubmit = async (e) => {
+  const displayNameSubmit = async (e) => {
     e.preventDefault();
     if (!displayName) {
       setError("display-name-empty");
       return;
     }
 
-    // Check if displayName is already taken
     const displayNameExists = await checkDisplayNameExists(displayName);
     setError("");
     if (displayNameExists) {
@@ -42,21 +41,24 @@ const Onboarding = () => {
       return;
     }
 
-    // Update the document with the new displayName
     const docRef = doc(collection(db, "users"), user.uid);
     await updateDoc(docRef, {
       displayName: displayName,
+      lowercaseDisplayName: displayName.toLowerCase(),
       onboarded: true,
     });
+    updateUserData({ displayName: displayName });
     navigate("/");
   };
 
-  // Function to check if displayName already exists
   const checkDisplayNameExists = async (displayName) => {
     try {
       const usersRef = collection(db, "users");
       const querySnapshot = await getDocs(
-        query(usersRef, where("displayName", "==", displayName))
+        query(
+          usersRef,
+          where("lowercaseDisplayName", "==", displayName.toLowerCase())
+        )
       );
       return !querySnapshot.empty;
     } catch (error) {
@@ -83,7 +85,10 @@ const Onboarding = () => {
                 value={displayName}
                 placeholder="yourdisplayname"
                 className={`w-full py-3 pl-3 my-2 border rounded-md ${error === "display-name-exists" || error === "display-name-empty" ? "border-red-500" : ""}`}
-                onChange={(e) => setDisplayName(e.target.value)}
+                onChange={(e) => {
+                  setDisplayName(e.target.value);
+                  setError("");
+                }}
               />
               {error && (
                 <p className="text-sm text-red-500">
@@ -95,7 +100,7 @@ const Onboarding = () => {
             <button
               type="submit"
               className="w-1/2 px-2 py-3 my-2 border rounded-md text-whitebg bg-zinc-700 hover:bg-zinc-600"
-              onClick={handleSubmit}
+              onClick={displayNameSubmit}
             >
               Let's Go.
             </button>

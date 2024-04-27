@@ -4,6 +4,7 @@ import GooglePNG from "../../assets/google.png";
 import { UserAuth } from "../../context/authContext";
 import { db } from "../../firebase";
 import { collection, setDoc, doc } from "firebase/firestore";
+import { sendEmailVerification } from "firebase/auth";
 
 const Signup = () => {
   const [email, setEmail] = useState("");
@@ -21,7 +22,8 @@ const Signup = () => {
       return;
     }
     try {
-      await createUser(email, password).then((cred) => {
+      await createUser(email, password).then(async (cred) => {
+        await sendEmailVerification(cred.user);
         setDoc(doc(collection(db, "users"), cred.user.uid), {
           uid: cred.user.uid,
           email: cred.user.email,
@@ -31,7 +33,6 @@ const Signup = () => {
       navigate("/onboarding");
     } catch (error) {
       console.log(error);
-      console.log("oopsie");
       switch (error.code) {
         case "auth/invalid-email":
           setError("invalid-email");

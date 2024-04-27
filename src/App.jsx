@@ -7,6 +7,7 @@ import Onboarding from "./pages/authPages/Onboarding";
 import { AuthContextProvider } from "./context/authContext";
 import ProtectedRoute from "./pages/ProtectedRoute";
 import { UserDataProvider } from "./context/userDataContext";
+import Settings from "./pages/Settings";
 
 const App = () => {
   return (
@@ -26,7 +27,11 @@ const App = () => {
           />
           <Route
             path="/accsettings"
-            element={<ProtectedRoute></ProtectedRoute>}
+            element={
+              <ProtectedRoute>
+                <Settings />
+              </ProtectedRoute>
+            }
           />
         </Routes>
       </UserDataProvider>

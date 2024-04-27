@@ -1,9 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { UserAuth } from "../context/authContext";
-import { useLocation } from "react-router-dom";
-import { db } from "../firebase";
-import { collection, updateDoc, doc, getDoc } from "firebase/firestore";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useUserData } from "../context/userDataContext";
 
 const Navbar = () => {
@@ -11,8 +9,15 @@ const Navbar = () => {
   const location = useLocation();
   const { pathname } = location;
   const [showDropdown, setShowDropdown] = useState(false);
+  const navigate = useNavigate();
   const dropdownRef = useRef(null);
   const { userData } = useUserData();
+  const [displayName, setDisplayName] = useState(userData.displayName || "");
+  const protectedRoutes = ["/accsettings", "/onboarding"];
+
+  useEffect(() => {
+    setDisplayName(userData.displayName || "");
+  }, [userData.displayName, userData]);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -29,7 +34,11 @@ const Navbar = () => {
   const handleLogout = async () => {
     try {
       await logout();
-      window.location.reload();
+      if (protectedRoutes.includes(pathname)) {
+        navigate("/");
+      } else {
+        window.location.reload();
+      }
     } catch (error) {
       console.log(error.message);
     }
@@ -39,9 +48,12 @@ const Navbar = () => {
     <nav>
       <ul className="flex justify-between">
         {pathname !== "/" ? (
-          <button className="mx-5 my-5 text-3xl font-bold hover:text-blue-500">
+          <Link
+            to="/"
+            className="mx-5 my-5 text-3xl font-bold hover:text-blue-500"
+          >
             Inkkura
-          </button>
+          </Link>
         ) : (
           <div></div>
         )}
@@ -58,7 +70,7 @@ const Navbar = () => {
                 type="button"
                 className="px-4 py-2 border rounded min-w-32 bg-zinc-100 hover:bg-zinc-200"
               >
-                {userData.displayName || user.email}
+                {displayName || user.email}
               </button>
               {showDropdown && (
                 <ul className="absolute w-full bg-white border rounded top-full">
