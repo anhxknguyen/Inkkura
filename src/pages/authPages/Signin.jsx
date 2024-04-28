@@ -1,14 +1,24 @@
-import React, { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import GooglePNG from "../../assets/google.png";
 import { UserAuth } from "../../context/authContext";
+import { useUserData } from "../../context/userDataContext";
 
 const Signin = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const { signIn } = UserAuth();
+  const { user, signIn } = UserAuth();
   const navigate = useNavigate();
   const [error, setError] = useState("");
+  const { userData } = useUserData();
+
+  useEffect(() => {
+    if (user && userData && userData.onboarded == false) {
+      navigate("/onboarding");
+    } else if (user) {
+      navigate("/");
+    }
+  }, [user]);
 
   //function to handle sign in
   const handleSignIn = async (e) => {
@@ -16,7 +26,6 @@ const Signin = () => {
     setError("");
     try {
       await signIn(email, password);
-      navigate("/");
     } catch (error) {
       // Handle authentication errors
       console.log(error.code);
@@ -45,14 +54,20 @@ const Signin = () => {
             placeholder="Email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className={`w-full py-3 pl-3 my-2 border rounded-md ${error === "invalid-credential" || error === "invalid-email" ? "border-red-500" : ""}`}
+            className={`w-full py-3 pl-3 my-2 border rounded-md ${
+              error === "invalid-credential" || error === "invalid-email"
+                ? "border-red-500"
+                : ""
+            }`}
           />
           <input
             type="password"
             placeholder="Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className={`w-full py-3 pl-3 my-2 border rounded-md ${error === "invalid-credential" && "border-red-500"}`}
+            className={`w-full py-3 pl-3 my-2 border rounded-md ${
+              error === "invalid-credential" && "border-red-500"
+            }`}
           />
           {error && (
             <p className="text-sm text-red-500">Error: {getErrorMsg(error)}</p>

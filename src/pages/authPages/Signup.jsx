@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import GooglePNG from "../../assets/google.png";
 import { UserAuth } from "../../context/authContext";
@@ -13,14 +13,16 @@ const Signup = () => {
   const [error, setError] = useState("");
   const navigate = useNavigate();
   const { createUser } = UserAuth();
-
+  const [buttonDisabled, setButtonDisabled] = useState(false);
   //function to handle sign up
   const signUp = async (e) => {
     e.preventDefault();
     setError("");
+    setButtonDisabled(true);
     //Checks if confirmPassword matches password
     if (password !== confirmPassword) {
       setError("mismatch-pass");
+      setButtonDisabled(false);
       return;
     }
     try {
@@ -54,6 +56,7 @@ const Signup = () => {
         default:
           setError("An error occurred!");
       }
+      setButtonDisabled(false);
     }
   };
 
@@ -67,7 +70,11 @@ const Signup = () => {
             placeholder="Email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className={`w-full py-3 pl-3 my-2 border rounded-md ${error === "email-in-use" || error === "invalid-email" ? "border-red-500" : ""}`}
+            className={`w-full py-3 pl-3 my-2 border rounded-md ${
+              error === "email-in-use" || error === "invalid-email"
+                ? "border-red-500"
+                : ""
+            }`}
           />
           <input
             type="password"
@@ -95,6 +102,7 @@ const Signup = () => {
           <button
             type="submit"
             className="w-full px-2 py-3 my-2 border rounded-md text-whitebg bg-zinc-700 hover:bg-zinc-600"
+            disabled={buttonDisabled}
           >
             Sign Up
           </button>

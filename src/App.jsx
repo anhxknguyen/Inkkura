@@ -1,4 +1,3 @@
-import React from "react";
 import { Routes, Route } from "react-router-dom";
 import Home from "./pages/Home";
 import Signin from "./pages/authPages/Signin";
@@ -8,6 +7,7 @@ import { AuthContextProvider } from "./context/authContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { UserDataProvider } from "./context/userDataContext";
 import Settings from "./pages/Settings";
+import ArtistListings from "./pages/ArtistListings";
 
 const App = () => {
   return (
@@ -33,6 +33,7 @@ const App = () => {
               </ProtectedRoute>
             }
           />
+          <Route path="/artistlistings" element={<ArtistListings />} />
         </Routes>
       </UserDataProvider>
     </AuthContextProvider>

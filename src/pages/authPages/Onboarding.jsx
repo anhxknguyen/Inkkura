@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useLayoutEffect } from "react";
+import { useState, useEffect } from "react";
 import logo from "../../assets/logo.png";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { UserAuth } from "../../context/authContext";
 import { useUserData } from "../../context/userDataContext";
 import { db } from "../../firebase";
@@ -15,7 +15,7 @@ const Onboarding = () => {
   const [error, setError] = useState("");
 
   // Redirect to home if user is already onboarded
-  useLayoutEffect(() => {
+  useEffect(() => {
     if (userData.onboarded) {
       navigate("/");
     }
@@ -67,7 +67,12 @@ const Onboarding = () => {
                 type="displayName"
                 value={displayName}
                 placeholder="yourdisplayname"
-                className={`w-full py-3 pl-3 my-2 border rounded-md ${error === "display-name-exists" || error === "display-name-empty" ? "border-red-500" : ""}`}
+                className={`w-full py-3 pl-3 my-2 border rounded-md ${
+                  error === "display-name-exists" ||
+                  error === "display-name-empty"
+                    ? "border-red-500"
+                    : ""
+                }`}
                 onChange={(e) => {
                   setDisplayName(e.target.value);
                   setError("");
