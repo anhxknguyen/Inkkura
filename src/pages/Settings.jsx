@@ -3,32 +3,36 @@ import Navbar from "../components/Navbar";
 import { UserAuth } from "../context/authContext";
 import { useUserData } from "../context/userDataContext";
 import { db } from "../firebase";
-import {
-  collection,
-  doc,
-  getDocs,
-  query,
-  updateDoc,
-  where,
-} from "firebase/firestore";
+import { checkDisplayNameExists } from "../utilFunc/checkDisplayNameExists";
+import { collection, doc, updateDoc } from "firebase/firestore";
 
+//Need to add email update functionality
 const Settings = () => {
   const { user } = UserAuth();
   const { userData, updateUserData } = useUserData();
   const [displayName, setDisplayName] = useState(userData.displayName || "");
   const [error, setError] = useState("");
+  const [isVerified, setisVerified] = useState(false);
 
+  // useEffect to update displayName state when userData.displayName changes
   useEffect(() => {
     setDisplayName(userData.displayName || "");
   }, [userData.displayName]);
 
+  useEffect(() => {
+    setisVerified(user.emailVerified);
+  }, [user.emailVerified]);
+
+  // Function to handle displayName changes
   const displayNameSubmit = async (e) => {
     e.preventDefault();
+    // Empty displayName input
     if (!displayName) {
       setError("display-name-empty");
       return;
     }
 
+    // Calls checkDisplayNameExists() to check if the inputted displayName is already taken. If it is, do not allow the user to proceed.
     const displayNameExists = await checkDisplayNameExists(displayName);
     setError("");
     if (displayNameExists) {
@@ -36,6 +40,7 @@ const Settings = () => {
       return;
     }
 
+    // Update displayName in database
     const docRef = doc(collection(db, "users"), user.uid);
     await updateDoc(docRef, {
       displayName: displayName,
@@ -43,37 +48,20 @@ const Settings = () => {
       onboarded: true,
     });
     updateUserData({ displayName: displayName });
-    window.location.reload();
-  };
-
-  const checkDisplayNameExists = async (displayName) => {
-    try {
-      const usersRef = collection(db, "users");
-      const querySnapshot = await getDocs(
-        query(
-          usersRef,
-          where("lowercaseDisplayName", "==", displayName.toLowerCase())
-        )
-      );
-      return !querySnapshot.empty;
-    } catch (error) {
-      console.error("Error checking displayName existence:", error);
-      return true; // Consider it exists if an error occurs
-    }
   };
 
   return (
-    <div>
+    <div className="h-full">
       <Navbar />
-      <div className="flex items-center justify-start mx-5 text-lg h-4/5">
-        <form className="flex flex-col">
+      <div className="flex items-center justify-start mx-5 text-lg">
+        <form className="flex flex-col w-full">
           <div className="flex flex-col">
             <label>Display Name</label>
             <input
               type="text"
               value={displayName}
               placeholder="Display Name"
-              className={`w-full py-3 pl-3 my-2 border rounded-md ${error === "display-name-exists" || error === "display-name-empty" ? "border-red-500" : ""}`}
+              className={`w-1/4 py-3 pl-3 my-2 border rounded-md ${error === "display-name-exists" || error === "display-name-empty" ? "border-red-500" : ""}`}
               onChange={(e) => {
                 setDisplayName(e.target.value);
                 setError("");
@@ -83,19 +71,31 @@ const Settings = () => {
           {error && (
             <p className="text-sm text-red-500">Error: {getErrorMsg(error)}</p>
           )}
+          <div>
+            Verification Status:{" "}
+            {isVerified ? (
+              <span className="text-green-500">Email Verified</span>
+            ) : (
+              <span className="text-red-500">Email Not Verified</span>
+            )}
+          </div>
           <button
             type="submit"
-            className="w-full px-2 py-3 my-2 border rounded-md text-whitebg bg-zinc-700 hover:bg-zinc-600"
+            className="w-1/4 px-2 py-3 my-2 border rounded-md text-whitebg bg-zinc-700 hover:bg-zinc-600"
             onClick={displayNameSubmit}
           >
             Save Changes
           </button>
         </form>
       </div>
+      <div className="flex items-start justify-start mx-5 text-lg">
+        My Listings
+      </div>
     </div>
   );
 };
 
+//Translates error code to error message
 const getErrorMsg = (error) => {
   switch (error) {
     case "display-name-exists":

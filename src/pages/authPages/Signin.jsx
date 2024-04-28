@@ -10,6 +10,7 @@ const Signin = () => {
   const navigate = useNavigate();
   const [error, setError] = useState("");
 
+  //function to handle sign in
   const handleSignIn = async (e) => {
     e.preventDefault();
     setError("");
@@ -85,6 +86,7 @@ const Signin = () => {
   );
 };
 
+//Translates error code to error message
 const getErrorMsg = (error) => {
   switch (error) {
     case "invalid-credential":

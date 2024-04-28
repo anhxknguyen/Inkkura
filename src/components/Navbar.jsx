@@ -15,10 +15,12 @@ const Navbar = () => {
   const [displayName, setDisplayName] = useState(userData.displayName || "");
   const protectedRoutes = ["/accsettings", "/onboarding"];
 
+  // Update display name when user data changes
   useEffect(() => {
     setDisplayName(userData.displayName || "");
   }, [userData.displayName, userData]);
 
+  // Close dropdown when clicked outside of dropdown
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
@@ -31,9 +33,11 @@ const Navbar = () => {
     };
   }, [dropdownRef]);
 
+  // Function to handle logout
   const handleLogout = async () => {
     try {
       await logout();
+      //If user is on a protected route, redirect to home page. Else, reload the page.
       if (protectedRoutes.includes(pathname)) {
         navigate("/");
       } else {

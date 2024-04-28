@@ -5,7 +5,7 @@ import Signin from "./pages/authPages/Signin";
 import Signup from "./pages/authPages/Signup";
 import Onboarding from "./pages/authPages/Onboarding";
 import { AuthContextProvider } from "./context/authContext";
-import ProtectedRoute from "./pages/ProtectedRoute";
+import ProtectedRoute from "./components/ProtectedRoute";
 import { UserDataProvider } from "./context/userDataContext";
 import Settings from "./pages/Settings";
 

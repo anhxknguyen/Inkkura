@@ -4,15 +4,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { UserAuth } from "../../context/authContext";
 import { useUserData } from "../../context/userDataContext";
 import { db } from "../../firebase";
-import {
-  collection,
-  updateDoc,
-  doc,
-  getDoc,
-  getDocs,
-  query,
-  where,
-} from "firebase/firestore";
+import { collection, updateDoc, doc } from "firebase/firestore";
+import { checkDisplayNameExists } from "../../utilFunc/checkDisplayNameExists";
 
 const Onboarding = () => {
   const { user } = UserAuth();
@@ -21,19 +14,23 @@ const Onboarding = () => {
   const navigate = useNavigate();
   const [error, setError] = useState("");
 
+  // Redirect to home if user is already onboarded
   useLayoutEffect(() => {
     if (userData.onboarded) {
       navigate("/");
     }
   }, [userData]);
 
+  //function to handle displayName changes
   const displayNameSubmit = async (e) => {
     e.preventDefault();
+    //Empty displayName input
     if (!displayName) {
       setError("display-name-empty");
       return;
     }
 
+    //Calls displayNameExists() to check if the inputted displayName is already taken. If it is, do not allow the user to proceed.
     const displayNameExists = await checkDisplayNameExists(displayName);
     setError("");
     if (displayNameExists) {
@@ -41,6 +38,7 @@ const Onboarding = () => {
       return;
     }
 
+    //Updates the user's displayName and onboarded status in the database
     const docRef = doc(collection(db, "users"), user.uid);
     await updateDoc(docRef, {
       displayName: displayName,
@@ -48,23 +46,8 @@ const Onboarding = () => {
       onboarded: true,
     });
     updateUserData({ displayName: displayName });
+    //Redirects to home page
     navigate("/");
-  };
-
-  const checkDisplayNameExists = async (displayName) => {
-    try {
-      const usersRef = collection(db, "users");
-      const querySnapshot = await getDocs(
-        query(
-          usersRef,
-          where("lowercaseDisplayName", "==", displayName.toLowerCase())
-        )
-      );
-      return !querySnapshot.empty;
-    } catch (error) {
-      console.error("Error checking displayName existence:", error);
-      return true; // Consider it exists if an error occurs
-    }
   };
 
   return (
@@ -114,6 +97,7 @@ const Onboarding = () => {
   );
 };
 
+//Translates error code to error message
 const getErrorMsg = (error) => {
   switch (error) {
     case "display-name-exists":

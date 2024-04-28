@@ -3,12 +3,14 @@ import { UserAuth } from "./authContext";
 import { db } from "../firebase";
 import { doc, getDoc } from "firebase/firestore";
 
+//global variable to fetch and store user data
 const UserDataContext = createContext();
 
 export const UserDataProvider = ({ children }) => {
   const { user } = UserAuth();
   const [userData, setUserData] = useState({});
 
+  //fetches and sets user data
   useEffect(() => {
     const fetchUserData = async () => {
       try {
@@ -26,6 +28,7 @@ export const UserDataProvider = ({ children }) => {
     fetchUserData();
   }, [user]);
 
+  //used to set user data to new data
   const updateUserData = (newData) => {
     setUserData((prevData) => ({
       ...prevData,

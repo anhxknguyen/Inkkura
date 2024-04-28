@@ -14,25 +14,30 @@ const Signup = () => {
   const navigate = useNavigate();
   const { createUser } = UserAuth();
 
+  //function to handle sign up
   const signUp = async (e) => {
     e.preventDefault();
     setError("");
+    //Checks if confirmPassword matches password
     if (password !== confirmPassword) {
       setError("mismatch-pass");
       return;
     }
     try {
+      //creates new user
       await createUser(email, password).then(async (cred) => {
-        await sendEmailVerification(cred.user);
+        await sendEmailVerification(cred.user); //sends email verification if successful
+        //sets userData in database
         setDoc(doc(collection(db, "users"), cred.user.uid), {
           uid: cred.user.uid,
           email: cred.user.email,
           onboarded: false,
         });
       });
+      //redirects to onboarding page
       navigate("/onboarding");
     } catch (error) {
-      console.log(error);
+      //Handle sign up error
       switch (error.code) {
         case "auth/invalid-email":
           setError("invalid-email");
@@ -116,6 +121,7 @@ const Signup = () => {
   );
 };
 
+//Translates error code to error message
 const getErrorMsg = (error) => {
   switch (error) {
     case "invalid-email":
