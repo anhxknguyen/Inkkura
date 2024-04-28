@@ -56,7 +56,7 @@ const Settings = () => {
       <div className="flex items-center justify-start mx-5 text-lg">
         <form className="flex flex-col w-full">
           <div className="flex flex-col">
-            <label>Display Name</label>
+            <label className="font-medium">Display Name</label>
             <input
               type="text"
               value={displayName}
@@ -71,12 +71,14 @@ const Settings = () => {
           {error && (
             <p className="text-sm text-red-500">Error: {getErrorMsg(error)}</p>
           )}
-          <div>
+          <div className="font-medium">
             Verification Status:{" "}
             {isVerified ? (
-              <span className="text-green-500">Email Verified</span>
+              <span className="font-normal text-green-500">Email Verified</span>
             ) : (
-              <span className="text-red-500">Email Not Verified</span>
+              <span className="font-normal text-red-500">
+                Email Not Verified
+              </span>
             )}
           </div>
           <button
@@ -89,7 +91,7 @@ const Settings = () => {
         </form>
       </div>
       <div className="flex items-start justify-start mx-5 text-lg">
-        My Listings
+        <p className="font-medium">My Listings</p>
       </div>
     </div>
   );

@@ -6,6 +6,9 @@ export default {
       colors: {
         whitebg: "#FDFDFD",
       },
+      fontFamily: {
+        inter: ["Inter", "sans-serif"],
+      },
     },
   },
   plugins: [],
