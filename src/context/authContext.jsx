@@ -3,6 +3,7 @@ import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signOut,
+  deleteUser,
   onAuthStateChanged,
 } from "firebase/auth";
 import { auth } from "../firebase";
@@ -27,6 +28,9 @@ export const AuthContextProvider = ({ children }) => {
     return signOut(auth);
   };
 
+  const deleteAccount = () => {
+    return deleteUser(auth.currentUser);
+  };
   //checks if a user is signed in and sets it appropriately
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -36,7 +40,9 @@ export const AuthContextProvider = ({ children }) => {
   }, []);
 
   return (
-    <UserContext.Provider value={{ createUser, user, logout, signIn }}>
+    <UserContext.Provider
+      value={{ createUser, user, logout, signIn, deleteAccount }}
+    >
       {children}
     </UserContext.Provider>
   );

@@ -1,14 +1,14 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import Navbar from "../components/Navbar";
 import { UserAuth } from "../context/authContext";
 import { useUserData } from "../context/userDataContext";
 import { db } from "../firebase";
 import { checkDisplayNameExists } from "../utilFunc/checkDisplayNameExists";
-import { collection, doc, updateDoc } from "firebase/firestore";
+import { collection, doc, updateDoc, deleteDoc } from "firebase/firestore";
 
 //Need to add email update functionality
 const Settings = () => {
-  const { user } = UserAuth();
+  const { user, deleteAccount } = UserAuth();
   const { userData, updateUserData } = useUserData();
   const [displayName, setDisplayName] = useState(userData.displayName || "");
   const [error, setError] = useState("");
@@ -22,6 +22,25 @@ const Settings = () => {
   useEffect(() => {
     setisVerified(user.emailVerified);
   }, [user.emailVerified]);
+
+  // Function to handle account deletion
+  const handleDelete = async () => {
+    // Deletion confirmation
+    const deletionConfirmation = confirm(
+      "Are you sure you want to delete your account?"
+    );
+    if (deletionConfirmation == false) {
+      return;
+    }
+
+    // Delete user data from database and delete account
+    try {
+      await deleteDoc(doc(db, "users", user.uid));
+      await deleteAccount();
+    } catch (error) {
+      console.log(error.message);
+    }
+  };
 
   // Function to handle displayName changes
   const displayNameSubmit = async (e) => {
@@ -61,7 +80,12 @@ const Settings = () => {
               type="text"
               value={displayName}
               placeholder="Display Name"
-              className={`w-1/4 py-3 pl-3 my-2 border rounded-md ${error === "display-name-exists" || error === "display-name-empty" ? "border-red-500" : ""}`}
+              className={`w-1/4 py-3 pl-3 my-2 border rounded-md ${
+                error === "display-name-exists" ||
+                error === "display-name-empty"
+                  ? "border-red-500"
+                  : ""
+              }`}
               onChange={(e) => {
                 setDisplayName(e.target.value);
                 setError("");
@@ -81,13 +105,22 @@ const Settings = () => {
               </span>
             )}
           </div>
-          <button
-            type="submit"
-            className="w-1/4 px-2 py-3 my-2 border rounded-md text-whitebg bg-zinc-700 hover:bg-zinc-600"
-            onClick={displayNameSubmit}
-          >
-            Save Changes
-          </button>
+          <div>
+            <button
+              type="delete"
+              className="w-1/4 px-2 py-3 my-2 bg-red-700 border rounded-md text-whitebg hover:bg-red-600"
+              onClick={handleDelete}
+            >
+              Delete Account
+            </button>
+            <button
+              type="submit"
+              className="w-1/4 px-2 py-3 my-2 border rounded-md text-whitebg bg-zinc-700 hover:bg-zinc-600"
+              onClick={displayNameSubmit}
+            >
+              Save Changes
+            </button>
+          </div>
         </form>
       </div>
       <div className="flex items-start justify-start mx-5 text-lg">
