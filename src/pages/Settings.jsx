@@ -95,7 +95,7 @@ const Settings = () => {
           {error && (
             <p className="text-sm text-red-500">Error: {getErrorMsg(error)}</p>
           )}
-          <div className="font-medium">
+          <div className="w-1/4 font-medium">
             Verification Status:{" "}
             {isVerified ? (
               <span className="font-normal text-green-500">Email Verified</span>
@@ -105,17 +105,17 @@ const Settings = () => {
               </span>
             )}
           </div>
-          <div>
+          <div className="w-1/4">
             <button
               type="delete"
-              className="w-1/4 px-2 py-3 my-2 bg-red-700 border rounded-md text-whitebg hover:bg-red-600"
+              className="w-1/2 px-2 py-3 my-2 bg-red-700 border rounded-md text-whitebg hover:bg-red-600"
               onClick={handleDelete}
             >
               Delete Account
             </button>
             <button
               type="submit"
-              className="w-1/4 px-2 py-3 my-2 border rounded-md text-whitebg bg-zinc-700 hover:bg-zinc-600"
+              className="w-1/2 px-2 py-3 my-2 border rounded-md text-whitebg bg-zinc-700 hover:bg-zinc-600"
               onClick={displayNameSubmit}
             >
               Save Changes
