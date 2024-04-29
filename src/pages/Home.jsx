@@ -11,14 +11,14 @@ const Home = () => {
           <h1 className="font-bold text-8xl">Inkkura</h1>
           <h2 className="text-3xl">bring your artistic visions to life.</h2>
           <Link
-            to="/artistListings"
+            to="/searchCommissions"
             className="w-1/2 px-6 py-2 mt-5 text-center border rounded-md text-whitebg bg-zinc-700 hover:bg-zinc-600"
           >
             Discover artists
           </Link>
         </div>
-        <div className="flex items-center h-full">
-          <img className="h-3/4" src={logo} />
+        <div className="flex items-center w-1/2 h-full">
+          <img className="h-4/5" src={logo} />
         </div>
       </div>
     </div>

@@ -2,9 +2,10 @@ import { useState, useEffect } from "react";
 import Navbar from "../components/Navbar";
 import { UserAuth } from "../context/authContext";
 import { useUserData } from "../context/userDataContext";
-import { db } from "../firebase";
+import { db, storage } from "../firebase";
 import { checkDisplayNameExists } from "../utilFunc/checkDisplayNameExists";
 import { collection, doc, updateDoc, deleteDoc } from "firebase/firestore";
+import { ref, deleteObject, listAll } from "firebase/storage";
 
 //Need to add email update functionality
 const Settings = () => {
@@ -36,8 +37,18 @@ const Settings = () => {
     // Delete user data from database and delete account
     try {
       await deleteDoc(doc(db, "users", user.uid));
+      const userStorageRef = ref(storage, user.uid);
+      const userStorageSnapshot = await listAll(userStorageRef);
+      await Promise.all(
+        userStorageSnapshot.items.map((item) => deleteObject(item))
+      );
+
       await deleteAccount();
     } catch (error) {
+      if (error.code === "auth/requires-recent-login") {
+        alert("Please log out and log back in to delete your account.");
+        logout();
+      }
       console.log(error.message);
     }
   };
@@ -123,9 +134,7 @@ const Settings = () => {
           </div>
         </form>
       </div>
-      <div className="flex items-start justify-start mx-5 text-lg">
-        <p className="font-medium">My Listings</p>
-      </div>
+      <div className="flex items-start justify-start mx-5 text-lg"></div>
     </div>
   );
 };

@@ -52,23 +52,26 @@ const Navbar = () => {
     <nav>
       <ul className="flex justify-between">
         {pathname !== "/" ? (
-          <Link
-            to="/"
-            className="mx-5 my-5 text-3xl font-bold hover:text-blue-500"
-          >
+          <Link to="/" className="mx-5 my-5 text-3xl font-bold hover:text-pink">
             Inkkura
           </Link>
         ) : (
           <div></div>
         )}
 
-        <div
-          onClick={() => setShowDropdown(!showDropdown)}
-          className="relative mx-5 my-5"
-          ref={dropdownRef}
-        >
+        <div className="flex items-center gap-10 mx-5 my-5">
+          <Link
+            to="/createCommission"
+            className="hover:text-pink hover:cursor-pointer"
+          >
+            My Commission
+          </Link>
           {user ? (
-            <>
+            <div
+              onClick={() => setShowDropdown(!showDropdown)}
+              ref={dropdownRef}
+              className="relative flex items-center justify-between gap-10"
+            >
               <button
                 id="user-settings"
                 type="button"
@@ -96,7 +99,7 @@ const Navbar = () => {
                   </li>
                 </ul>
               )}
-            </>
+            </div>
           ) : (
             <div className="flex space-x-2">
               <Link to="/signin" className="px-6 py-2 hover:text-blue-500">

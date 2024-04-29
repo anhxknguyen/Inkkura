@@ -7,7 +7,8 @@ import { AuthContextProvider } from "./context/authContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { UserDataProvider } from "./context/userDataContext";
 import Settings from "./pages/Settings";
-import ArtistListings from "./pages/ArtistListings";
+import SearchCommissions from "./pages/SearchCommissions";
+import CreateCommission from "./pages/CreateCommission";
 
 const App = () => {
   return (
@@ -33,7 +34,15 @@ const App = () => {
               </ProtectedRoute>
             }
           />
-          <Route path="/artistlistings" element={<ArtistListings />} />
+          <Route path="/searchCommissions" element={<SearchCommissions />} />
+          <Route
+            path="/createCommission"
+            element={
+              <ProtectedRoute>
+                <CreateCommission />
+              </ProtectedRoute>
+            }
+          />
         </Routes>
       </UserDataProvider>
     </AuthContextProvider>
