@@ -1,6 +1,6 @@
 import Navbar from "../components/Navbar";
 import { useEffect, useState } from "react";
-import { storage } from "../firebase";
+import { db, storage } from "../firebase";
 import {
   ref,
   uploadBytes,
@@ -9,19 +9,57 @@ import {
   deleteObject,
 } from "firebase/storage";
 import { UserAuth } from "../context/authContext";
+import { useUserData } from "../context/userDataContext";
+import { doc, setDoc, updateDoc, getDoc } from "firebase/firestore";
+import DiscordSVG from "../assets/DiscordSVG";
+import EmailSVG from "../assets/EmailSVG";
+import TwitterSVG from "../assets/TwitterSVG";
+import InstagramSVG from "../assets/InstagramSVG";
 
 const CreateCommission = () => {
-  const [showAddEmail, setShowAddEmail] = useState(false);
-  const [showAddDiscord, setShowAddDiscord] = useState(false);
-  const [showAddTwitter, setShowAddTwitter] = useState(false);
-  const [showAddInstagram, setShowAddInstagram] = useState(false);
   const [imageUpload, setImageUpload] = useState(null);
-  const [imageList, setImageList] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [uploading, setUploading] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const { user } = UserAuth();
   const imageListRef = ref(storage, `${user.uid}/`);
+  const { commissionData } = useUserData();
+  const [imageList, setImageList] = useState([]);
+  const [commissionTitle, setCommissionTitle] = useState("");
+  const [commissionDescription, setCommissionDescription] = useState("");
+  const [lowerPriceRange, setLowerPriceRange] = useState(0);
+  const [upperPriceRange, setUpperPriceRange] = useState(0);
+  const [contactInfo, setContactInfo] = useState({});
+  const [isEditingEmail, setIsEditingEmail] = useState(false);
+  const [isEditingDiscord, setIsEditingDiscord] = useState(false);
+  const [isEditingTwitter, setIsEditingTwitter] = useState(false);
+  const [isEditingInstagram, setIsEditingInstagram] = useState(false);
+  const [isPublishedListing, setIsPublishedListing] = useState(false);
+
+  const handlePublish = async (e) => {
+    e.preventDefault();
+    const commmissionsDocRef = doc(db, "commissions", user.uid);
+    const docSnapshot = await getDoc(commmissionsDocRef);
+    if (docSnapshot.exists() === false) {
+      await setDoc(doc(db, "commissions", user.uid), {
+        title: commissionTitle,
+        description: commissionDescription,
+        priceRange: [lowerPriceRange, upperPriceRange],
+        contact: contactInfo,
+        images: imageList,
+        published: true,
+      });
+      return;
+    }
+    await updateDoc(commmissionsDocRef, {
+      title: commissionTitle,
+      description: commissionDescription,
+      priceRange: [lowerPriceRange, upperPriceRange],
+      contact: contactInfo,
+      images: imageList,
+      published: true,
+    });
+  };
 
   const uploadImage = () => {
     if (imageUpload == null) {
@@ -95,11 +133,36 @@ const CreateCommission = () => {
         });
       }
     });
-
     return () => {
       isMounted = false;
     };
   }, []);
+
+  useEffect(() => {
+    setCommissionTitle(commissionData.title || "");
+  }, [commissionData.title]);
+
+  useEffect(() => {
+    setCommissionDescription(commissionData.description || "");
+  }, [commissionData.description]);
+
+  useEffect(() => {
+    setLowerPriceRange(
+      commissionData.priceRange ? commissionData.priceRange[0] : 0
+    );
+    setUpperPriceRange(
+      commissionData.priceRange ? commissionData.priceRange[1] : 0
+    );
+  }, [commissionData.priceRange]);
+
+  useEffect(() => {
+    setIsPublishedListing(commissionData.published || false);
+  }, [commissionData.published]);
+
+  useEffect(() => {
+    console.log(commissionData.contact);
+    setContactInfo(commissionData.contact || {});
+  }, [commissionData.contact]);
 
   useEffect(() => {
     if (imageUpload !== null) {
@@ -132,14 +195,18 @@ const CreateCommission = () => {
               <input
                 type="text"
                 placeholder="Commission Name"
+                value={commissionTitle}
                 className="py-3 pl-3 mt-2 border border-black rounded-md "
+                onChange={(e) => setCommissionTitle(e.target.value)}
               />
             </div>
             <div className="flex flex-col">
               <label className="font-medium">Listing Description</label>
               <textarea
                 placeholder="Commission Description"
+                value={commissionDescription}
                 className="py-3 pl-3 mt-2 border border-black rounded-md h-80"
+                onChange={(e) => setCommissionDescription(e.target.value)}
               />
             </div>
             <div className="flex flex-col">
@@ -151,7 +218,9 @@ const CreateCommission = () => {
                   <input
                     type="number"
                     placeholder="10"
+                    value={lowerPriceRange}
                     className="w-16 h-10 text-center border border-black rounded-md"
+                    onChange={(e) => setLowerPriceRange(e.target.value)}
                   ></input>
                 </span>{" "}
                 to ${" "}
@@ -159,69 +228,126 @@ const CreateCommission = () => {
                   <input
                     type="number"
                     placeholder="100"
+                    value={upperPriceRange}
                     className="w-16 h-10 text-center border border-black rounded-md"
+                    onChange={(e) => setUpperPriceRange(e.target.value)}
                   ></input>
                 </span>
               </div>
             </div>
             <div className="flex flex-col">
               <p className="font-medium">Contact</p>
-              {showAddEmail ? (
-                <input
-                  type="email"
-                  placeholder="Email"
-                  className="w-1/2 pl-2 mt-2 border border-black rounded-md"
-                />
-              ) : (
-                <p
-                  className="text-zinc-500 hover:text-pink hover:cursor-pointer"
-                  onClick={() => setShowAddEmail(true)}
-                >
-                  + Add Email
-                </p>
-              )}
-              {showAddDiscord ? (
-                <input
-                  type="text"
-                  placeholder="Discord"
-                  className="w-1/2 pl-2 mt-2 border border-black rounded-md"
-                />
-              ) : (
-                <p
-                  className="w-1/2 text-zinc-500 hover:text-pink hover:cursor-pointer"
-                  onClick={() => setShowAddDiscord(true)}
-                >
-                  + Add Discord
-                </p>
-              )}
-              {showAddTwitter ? (
-                <input
-                  type="text"
-                  placeholder="Twitter"
-                  className="w-1/2 pl-2 mt-2 border border-black rounded-md"
-                />
-              ) : (
-                <p
-                  className="w-1/2 text-zinc-500 hover:text-pink hover:cursor-pointer"
-                  onClick={() => setShowAddTwitter(true)}
-                >
-                  + Add Twitter
-                </p>
-              )}
-              {showAddInstagram ? (
-                <input
-                  type="text"
-                  placeholder="Instagram"
-                  className="w-1/2 pl-2 mt-2 border border-black rounded-md"
-                />
-              ) : (
-                <p
-                  className="text-zinc-500 hover:text-pink hover:cursor-pointer"
-                  onClick={() => setShowAddInstagram(true)}
-                >
-                  + Add Instagram
-                </p>
-              )}
+              <div className="flex items-center gap-2">
+                <EmailSVG />
+                {isEditingEmail ? (
+                  <input
+                    type="email"
+                    placeholder="Email"
+                    value={contactInfo.email}
+                    className="w-1/2 pl-2 border border-black rounded-md"
+                    onChange={(e) =>
+                      setContactInfo({ ...contactInfo, email: e.target.value })
+                    }
+                    onFocus={() => setIsEditingEmail(true)}
+                    onBlur={() => setIsEditingEmail(false)}
+                    autoFocus
+                  />
+                ) : (
+                  <p
+                    className="text-zinc-500 w-max hover:text-pink hover:cursor-pointer"
+                    onClick={() => setIsEditingEmail(true)}
+                  >
+                    {contactInfo.email ? contactInfo.email : "+ Add Email"}
+                  </p>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                <DiscordSVG />
+                {isEditingDiscord ? (
+                  <input
+                    type="text"
+                    placeholder="Discord"
+                    value={contactInfo.discord}
+                    className="w-1/2 pl-2 border border-black rounded-md"
+                    onChange={(e) =>
+                      setContactInfo({
+                        ...contactInfo,
+                        discord: e.target.value,
+                      })
+                    }
+                    onFocus={() => setIsEditingDiscord(true)}
+                    onBlur={() => setIsEditingDiscord(false)}
+                    autoFocus
+                  />
+                ) : (
+                  <p
+                    className="text-zinc-500 w-max hover:text-pink hover:cursor-pointer"
+                    onClick={() => setIsEditingDiscord(true)}
+                  >
+                    {contactInfo.discord
+                      ? contactInfo.discord
+                      : "+ Add Discord"}
+                  </p>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                <TwitterSVG />
+                {isEditingTwitter ? (
+                  <input
+                    type="text"
+                    placeholder="Twitter"
+                    value={contactInfo.twitter}
+                    className="w-1/2 pl-2 border border-black rounded-md"
+                    onChange={(e) =>
+                      setContactInfo({
+                        ...contactInfo,
+                        twitter: e.target.value,
+                      })
+                    }
+                    onFocus={() => setIsEditingTwitter(true)}
+                    onBlur={() => setIsEditingTwitter(false)}
+                    autoFocus
+                  />
+                ) : (
+                  <p
+                    className="text-zinc-500 w-max hover:text-pink hover:cursor-pointer"
+                    onClick={() => setIsEditingTwitter(true)}
+                  >
+                    {contactInfo.twitter
+                      ? contactInfo.twitter
+                      : "+ Add Twitter"}
+                  </p>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                <InstagramSVG />
+                {isEditingInstagram ? (
+                  <input
+                    type="text"
+                    placeholder="Instagram"
+                    value={contactInfo.instagram}
+                    className="w-1/2 pl-2 border border-black rounded-md"
+                    onChange={(e) =>
+                      setContactInfo({
+                        ...contactInfo,
+                        instagram: e.target.value,
+                      })
+                    }
+                    autoFocus
+                    onFocus={() => setIsEditingInstagram(true)}
+                    onBlur={() => setIsEditingInstagram(false)}
+                  />
+                ) : (
+                  <p
+                    className="text-zinc-500 w-max hover:text-pink hover:cursor-pointer"
+                    onClick={() => setIsEditingInstagram(true)}
+                  >
+                    {contactInfo.instagram
+                      ? contactInfo.instagram
+                      : "+ Add Instagram"}
+                  </p>
+                )}
+              </div>
             </div>
           </form>
         </div>
@@ -266,7 +392,7 @@ const CreateCommission = () => {
               &lt;
             </button>
             <button
-              className="w-1/5 px-2 py-1 text-white bg-red-500 rounded-full hover:bg-red-600"
+              className="w-1/12 px-2 py-1 text-white bg-red-500 rounded-full hover:bg-red-600"
               onClick={deleteCurrentImage}
               disabled={deleting}
             >
@@ -279,7 +405,10 @@ const CreateCommission = () => {
               &gt;
             </button>
           </div>
-          <button className="self-end w-1/4 px-4 py-4 mt-2 text-sm bg-blue-700 border rounded font-regular min-w-32 text-whitebg hover:bg-blue-600">
+          <button
+            onClick={handlePublish}
+            className="self-end w-1/4 px-4 py-4 mt-2 text-sm bg-blue-700 border rounded font-regular min-w-32 text-whitebg hover:bg-blue-600"
+          >
             Publish Listing
           </button>
         </div>
