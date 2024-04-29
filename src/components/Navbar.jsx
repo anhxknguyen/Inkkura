@@ -59,13 +59,15 @@ const Navbar = () => {
           <div></div>
         )}
 
-        <div className="flex items-center gap-10 mx-5 my-5">
-          <Link
-            to="/createCommission"
-            className="hover:text-pink hover:cursor-pointer"
-          >
-            My Commission
-          </Link>
+        <div className="flex items-center gap-5 mx-5 my-5">
+          {user && (
+            <Link
+              to="/createCommission"
+              className="px-4 py-2 border border-black rounded hover:bg-pink hover:cursor-pointer"
+            >
+              +
+            </Link>
+          )}
           {user ? (
             <div
               onClick={() => setShowDropdown(!showDropdown)}
@@ -75,23 +77,23 @@ const Navbar = () => {
               <button
                 id="user-settings"
                 type="button"
-                className="px-4 py-2 border rounded min-w-32 bg-zinc-100 hover:bg-zinc-200"
+                className="px-4 py-2 bg-white border border-black rounded-md min-w-32 hover:bg-pink"
               >
                 {displayName || user.email}
               </button>
               {showDropdown && (
-                <ul className="absolute w-full bg-white border rounded top-full">
+                <ul className="absolute w-full bg-white border-b border-black rounded-b-md border-x top-full">
                   <li>
                     <Link
                       to="/accsettings"
-                      className="block w-full px-4 py-2 hover:bg-gray-100 hover:cursor-pointer"
+                      className="block w-full px-4 py-2 hover:bg-pink hover:cursor-pointer"
                     >
                       Settings
                     </Link>
                   </li>
                   <li>
                     <button
-                      className="block w-full px-4 py-2 text-left hover:bg-gray-100"
+                      className="block w-full px-4 py-2 text-left hover:bg-pink"
                       onClick={handleLogout}
                     >
                       Sign Out
