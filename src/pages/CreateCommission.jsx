@@ -248,7 +248,7 @@ const CreateCommission = () => {
   };
 
   return (
-    <div>
+    <div className="mb-32">
       <Navbar />
       <div className="flex justify-between mx-5 text-lg">
         <div className="flex items-start justify-start w-1/2">

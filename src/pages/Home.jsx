@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 
 const Home = () => {
   return (
-    <div className="h-full">
+    <div className="h-full mb-32">
       <Navbar />
       <div className="flex items-center justify-between mx-20 my-5 h-4/5">
         <div className="flex flex-col">

@@ -13,7 +13,7 @@ const CommissionCard = ({ commission }) => {
   useEffect(() => {
     const fetchArtistDisplayName = async () => {
       try {
-        const artistDoc = await doc(db, "users", artistUID);
+        const artistDoc = doc(db, "users", artistUID);
         const artistSnapshot = await getDoc(artistDoc);
         if (artistSnapshot.exists()) {
           const artistData = artistSnapshot.data();
