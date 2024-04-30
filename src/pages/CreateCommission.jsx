@@ -35,6 +35,7 @@ const CreateCommission = () => {
   const [isEditingTwitter, setIsEditingTwitter] = useState(false);
   const [isEditingInstagram, setIsEditingInstagram] = useState(false);
   const [isPublishedListing, setIsPublishedListing] = useState(false);
+  const [imageOriginalURLList, setImageOriginalURLList] = useState([]);
 
   const handlePublish = async (e) => {
     e.preventDefault();
@@ -61,15 +62,14 @@ const CreateCommission = () => {
     });
   };
 
+  // Function to upload image
   const uploadImage = () => {
     if (imageUpload == null) {
       console.log("fail");
       return;
     }
-
     const imageName = imageUpload.name;
     const imageRef = ref(storage, `${user.uid}/${imageName}`);
-
     // Do not upload if filename already exists
     listAll(imageListRef)
       .then((res) => {
@@ -77,13 +77,13 @@ const CreateCommission = () => {
         if (existingFiles.includes(imageName)) {
           return;
         }
-
         //upload image
         setUploading(true);
         uploadBytes(imageRef, imageUpload)
           .then((snapshot) => {
             getDownloadURL(snapshot.ref).then((url) => {
               setImageList((prev) => [...prev, url]);
+              setImageOriginalURLList((prev) => [...prev, imageName]);
             });
           })
           .catch((error) => {
@@ -98,6 +98,7 @@ const CreateCommission = () => {
       });
   };
 
+  // Function to delete image
   const deleteCurrentImage = () => {
     if (imageList.length === 0) return;
     const currentImageUrl = imageList[currentIndex];
@@ -106,6 +107,9 @@ const CreateCommission = () => {
     deleteObject(imageRef)
       .then(() => {
         setImageList((prev) => prev.filter((url) => url !== currentImageUrl));
+        setImageOriginalURLList((prev) =>
+          prev.filter((url) => url !== imageOriginalURLList[currentIndex])
+        );
         setCurrentIndex((prevIndex) =>
           prevIndex === imageList.length - 1 ? 0 : prevIndex
         );
@@ -118,16 +122,20 @@ const CreateCommission = () => {
       });
   };
 
+  // useEffect to list all images at start of render
   useEffect(() => {
     let isMounted = true;
     listAll(imageListRef).then((res) => {
       if (isMounted) {
         const urls = [];
+        const originalNames = []; // New array to hold original file names
         res.items.forEach((itemRef) => {
+          originalNames.push(itemRef.name); // Store original file names
           getDownloadURL(itemRef).then((url) => {
             urls.push(url);
             if (urls.length === res.items.length) {
               setImageList(urls);
+              setImageOriginalURLList(originalNames); // Set original file names
             }
           });
         });
@@ -138,14 +146,17 @@ const CreateCommission = () => {
     };
   }, []);
 
+  // useEffect to set commission title
   useEffect(() => {
     setCommissionTitle(commissionData.title || "");
   }, [commissionData.title]);
 
+  // useEffect to set commission description
   useEffect(() => {
     setCommissionDescription(commissionData.description || "");
   }, [commissionData.description]);
 
+  // useEffect to set price range
   useEffect(() => {
     setLowerPriceRange(
       commissionData.priceRange ? commissionData.priceRange[0] : 0
@@ -155,27 +166,32 @@ const CreateCommission = () => {
     );
   }, [commissionData.priceRange]);
 
+  // useEffect to set published status
   useEffect(() => {
     setIsPublishedListing(commissionData.published || false);
   }, [commissionData.published]);
 
+  // useEffect to set contact info
   useEffect(() => {
     console.log(commissionData.contact);
     setContactInfo(commissionData.contact || {});
   }, [commissionData.contact]);
 
+  // useEffect to upload image as soon as a new file is uploaded
   useEffect(() => {
     if (imageUpload !== null) {
       uploadImage();
     }
   }, [imageUpload]);
 
+  // Function to go to previous image
   const goToPreviousImage = () => {
     setCurrentIndex((prevIndex) =>
       prevIndex === 0 ? imageList.length - 1 : prevIndex - 1
     );
   };
 
+  // Function to go to next image
   const goToNextImage = () => {
     setCurrentIndex((prevIndex) =>
       prevIndex === imageList.length - 1 ? 0 : prevIndex + 1
@@ -370,9 +386,19 @@ const CreateCommission = () => {
               className="hidden"
             ></input>
           </div>
-          {/* <div id="uploaded-files" className="text-sm">
-            
-          </div> */}
+          <div id="uploaded-files" className="text-sm">
+            {imageOriginalURLList.map((url, index) => (
+              <p
+                key={index}
+                className="hover:text-pink hover:cursor-pointer w-fit"
+                onClick={() => {
+                  setCurrentIndex(index);
+                }}
+              >
+                {index + 1}. {url}
+              </p>
+            ))}
+          </div>
           <div
             id="preview"
             className="border border-black rounded-md h-preview"
@@ -407,9 +433,9 @@ const CreateCommission = () => {
           </div>
           <button
             onClick={handlePublish}
-            className="self-end w-1/4 px-4 py-4 mt-2 text-sm bg-blue-700 border rounded font-regular min-w-32 text-whitebg hover:bg-blue-600"
+            className="self-end w-1/4 px-4 py-4 mt-2 text-sm bg-blue-700 border rounded-md font-regular min-w-32 text-whitebg hover:bg-blue-600"
           >
-            Publish Listing
+            {isPublishedListing ? "Update Listing" : "Publish Listing"}
           </button>
         </div>
       </div>

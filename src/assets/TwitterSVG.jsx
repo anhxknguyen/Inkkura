@@ -6,7 +6,7 @@ const TwitterSVG = () => {
       viewBox="0 -2 20 20"
       version="1.1"
       xmlns="http://www.w3.org/2000/svg"
-      xmlns:xlink="http://www.w3.org/1999/xlink"
+      xmlnsXlink="http://www.w3.org/1999/xlink"
     >
       <title>twitter [#154]</title>
       <desc>Created with Sketch.</desc>
