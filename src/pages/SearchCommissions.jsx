@@ -1,11 +1,49 @@
 import { useEffect, useState } from "react";
 import Navbar from "../components/Navbar";
+import { getDocs } from "firebase/firestore";
+import { collection } from "firebase/firestore";
+import { db } from "../firebase";
+import CommissionCard from "../components/CommissionCard";
 
 const SearchCommissions = () => {
+  const [commissions, setCommissions] = useState([]);
+
+  useEffect(() => {
+    const findAllCommissions = async () => {
+      try {
+        const querySnapshot = await getDocs(collection(db, "commissions"));
+        const allCommissions = [];
+        querySnapshot.forEach((doc) => {
+          if (doc.data().primary) {
+            return;
+          }
+          allCommissions.push(doc.data());
+        });
+        const filteredCommissions = allCommissions.filter((commission) => {
+          return (
+            !commission.hasOwnProperty("primary") &&
+            commission.published === true
+          );
+        });
+        setCommissions(filteredCommissions);
+      } catch (error) {
+        console.error("Error getting commissions:", error);
+      }
+    };
+
+    findAllCommissions();
+  }, []);
+
+  console.log(commissions);
+
   return (
-    <div className="mx-5">
+    <div className="">
       <Navbar />
-      <div className="mx-5"> All Commissions Here</div>
+      <div className="mx-5 grid-container">
+        {commissions.map((commission) => {
+          return <CommissionCard key={commission.id} commission={commission} />;
+        })}
+      </div>
     </div>
   );
 };

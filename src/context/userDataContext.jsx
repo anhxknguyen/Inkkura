@@ -9,7 +9,6 @@ const UserDataContext = createContext();
 export const UserDataProvider = ({ children }) => {
   const { user } = UserAuth();
   const [userData, setUserData] = useState({});
-  const [commissionData, setCommissionData] = useState({});
 
   //fetches and sets user data
   useEffect(() => {
@@ -26,21 +25,7 @@ export const UserDataProvider = ({ children }) => {
         console.error("Error fetching user data:", error);
       }
     };
-    const fetchCommissionData = async () => {
-      try {
-        if (user && user.uid) {
-          const docRef = doc(db, "commissions", user.uid);
-          const docSnap = await getDoc(docRef);
-          if (docSnap.exists()) {
-            setCommissionData(docSnap.data());
-          }
-        }
-      } catch (error) {
-        console.error("Error fetching commission data:", error);
-      }
-    };
     fetchUserData();
-    fetchCommissionData();
   }, [user]);
 
   //used to set user data to new data
@@ -52,9 +37,7 @@ export const UserDataProvider = ({ children }) => {
   };
 
   return (
-    <UserDataContext.Provider
-      value={{ userData, updateUserData, commissionData }}
-    >
+    <UserDataContext.Provider value={{ userData, updateUserData }}>
       {children}
     </UserDataContext.Provider>
   );

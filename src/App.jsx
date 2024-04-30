@@ -9,8 +9,12 @@ import { UserDataProvider } from "./context/userDataContext";
 import Settings from "./pages/Settings";
 import SearchCommissions from "./pages/SearchCommissions";
 import CreateCommission from "./pages/CreateCommission";
+import { useLocation } from "react-router-dom";
+import { useEffect, useState } from "react";
 
 const App = () => {
+  const location = useLocation();
+
   return (
     <AuthContextProvider>
       <UserDataProvider>

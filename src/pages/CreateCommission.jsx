@@ -15,43 +15,60 @@ import DiscordSVG from "../assets/DiscordSVG";
 import EmailSVG from "../assets/EmailSVG";
 import TwitterSVG from "../assets/TwitterSVG";
 import InstagramSVG from "../assets/InstagramSVG";
+import { v4 } from "uuid";
 
 const CreateCommission = () => {
-  const [imageUpload, setImageUpload] = useState(null);
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const [imageUpload, setImageUpload] = useState(null); //Stores uploaded image
+  const [currentIndex, setCurrentIndex] = useState(0); //Stores index of current image being displayed
+
+  //State to store uploading and deleting status. Used to prevent multiple uploads/deletes (spamming)
   const [uploading, setUploading] = useState(false);
   const [deleting, setDeleting] = useState(false);
+
+  //User and Commission Data
   const { user } = UserAuth();
+  let { userData } = useUserData();
+  const [commissionData, setCommissionData] = useState({}); //Stores commission data
+
   const imageListRef = ref(storage, `${user.uid}/`);
-  const { commissionData } = useUserData();
-  const [imageList, setImageList] = useState([]);
+  const [imageList, setImageList] = useState([]); // stores image URLs as it is in the database
+  const [imageOriginalURLList, setImageOriginalURLList] = useState([]); //stores image URLS as it is when uploaded by user
+
+  // State to store commission details
   const [commissionTitle, setCommissionTitle] = useState("");
   const [commissionDescription, setCommissionDescription] = useState("");
   const [lowerPriceRange, setLowerPriceRange] = useState(0);
   const [upperPriceRange, setUpperPriceRange] = useState(0);
   const [contactInfo, setContactInfo] = useState({});
+  const [commissionArtist, setCommissionArtist] = useState(user.uid || "");
+
+  // State to store editing status of contact info (mainly for styling purposes)
   const [isEditingEmail, setIsEditingEmail] = useState(false);
   const [isEditingDiscord, setIsEditingDiscord] = useState(false);
   const [isEditingTwitter, setIsEditingTwitter] = useState(false);
   const [isEditingInstagram, setIsEditingInstagram] = useState(false);
   const [isPublishedListing, setIsPublishedListing] = useState(false);
-  const [imageOriginalURLList, setImageOriginalURLList] = useState([]);
 
+  // Function to handle publish/update listing
   const handlePublish = async (e) => {
     e.preventDefault();
     const commmissionsDocRef = doc(db, "commissions", user.uid);
     const docSnapshot = await getDoc(commmissionsDocRef);
+    // If document does not exist, create a new document
     if (docSnapshot.exists() === false) {
       await setDoc(doc(db, "commissions", user.uid), {
+        id: v4(),
         title: commissionTitle,
         description: commissionDescription,
         priceRange: [lowerPriceRange, upperPriceRange],
         contact: contactInfo,
         images: imageList,
         published: true,
+        artist: commissionArtist,
       });
       return;
     }
+    // If document exists, update the document
     await updateDoc(commmissionsDocRef, {
       title: commissionTitle,
       description: commissionDescription,
@@ -59,7 +76,22 @@ const CreateCommission = () => {
       contact: contactInfo,
       images: imageList,
       published: true,
+      artist: commissionArtist,
     });
+  };
+
+  const reFetchCommissionData = async () => {
+    try {
+      if (user && user.uid) {
+        const docRef = doc(db, "commissions", user.uid);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          setCommissionData(docSnap.data());
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching commission data:", error);
+    }
   };
 
   // Function to upload image
@@ -70,31 +102,27 @@ const CreateCommission = () => {
     }
     const imageName = imageUpload.name;
     const imageRef = ref(storage, `${user.uid}/${imageName}`);
-    // Do not upload if filename already exists
-    listAll(imageListRef)
-      .then((res) => {
-        const existingFiles = res.items.map((item) => item.name);
-        if (existingFiles.includes(imageName)) {
-          return;
-        }
-        //upload image
-        setUploading(true);
-        uploadBytes(imageRef, imageUpload)
-          .then((snapshot) => {
-            getDownloadURL(snapshot.ref).then((url) => {
-              setImageList((prev) => [...prev, url]);
-              setImageOriginalURLList((prev) => [...prev, imageName]);
-            });
-          })
-          .catch((error) => {
-            console.error("Error uploading image:", error);
-          })
-          .finally(() => {
-            setUploading(false);
-          });
+
+    // Check if image already exists in imageList
+    if (imageList.includes(imageRef)) {
+      console.log("no duplicate files allowed");
+      return;
+    }
+
+    // Upload image
+    setUploading(true);
+    uploadBytes(imageRef, imageUpload)
+      .then((snapshot) => {
+        getDownloadURL(snapshot.ref).then((url) => {
+          setImageList((prev) => [...prev, url]);
+          setImageOriginalURLList((prev) => [...prev, imageName]);
+        });
       })
       .catch((error) => {
-        console.error("Error listing images:", error);
+        console.error("Error uploading image:", error);
+      })
+      .finally(() => {
+        setUploading(false);
       });
   };
 
@@ -106,9 +134,10 @@ const CreateCommission = () => {
     setDeleting(true);
     deleteObject(imageRef)
       .then(() => {
-        setImageList((prev) => prev.filter((url) => url !== currentImageUrl));
-        setImageOriginalURLList((prev) =>
-          prev.filter((url) => url !== imageOriginalURLList[currentIndex])
+        setImageList((prev) => prev.filter((url) => url !== currentImageUrl)); // Remove URL from imageList
+        setImageOriginalURLList(
+          (prev) =>
+            prev.filter((url) => url !== imageOriginalURLList[currentIndex]) // Remove original file name from imageOriginalURLList
         );
         setCurrentIndex((prevIndex) =>
           prevIndex === imageList.length - 1 ? 0 : prevIndex
@@ -125,15 +154,25 @@ const CreateCommission = () => {
   // useEffect to list all images at start of render
   useEffect(() => {
     let isMounted = true;
+    const publishedImages = commissionData.images; // Stores published images only (not the ones in firebase storage)
     listAll(imageListRef).then((res) => {
       if (isMounted) {
-        const urls = [];
+        const urls = []; // New array to hold image URLs
         const originalNames = []; // New array to hold original file names
         res.items.forEach((itemRef) => {
-          originalNames.push(itemRef.name); // Store original file names
+          // Loop through each item in the storage
           getDownloadURL(itemRef).then((url) => {
-            urls.push(url);
-            if (urls.length === res.items.length) {
+            // Get download URL of each item
+            if (publishedImages && publishedImages.includes(url)) {
+              // If the image is published, add it to the lists
+              originalNames.push(itemRef.name);
+              urls.push(url);
+            } else if (publishedImages && !publishedImages.includes(url)) {
+              // If the image is not published, delete it from storage
+              deleteObject(itemRef);
+            }
+            if (publishedImages && urls.length === publishedImages.length) {
+              // Set lists after all published images are added
               setImageList(urls);
               setImageOriginalURLList(originalNames); // Set original file names
             }
@@ -144,6 +183,10 @@ const CreateCommission = () => {
     return () => {
       isMounted = false;
     };
+  }, [commissionData.images]);
+
+  useEffect(() => {
+    reFetchCommissionData();
   }, []);
 
   // useEffect to set commission title
@@ -173,7 +216,6 @@ const CreateCommission = () => {
 
   // useEffect to set contact info
   useEffect(() => {
-    console.log(commissionData.contact);
     setContactInfo(commissionData.contact || {});
   }, [commissionData.contact]);
 
@@ -183,6 +225,13 @@ const CreateCommission = () => {
       uploadImage();
     }
   }, [imageUpload]);
+
+  // useEffect to set commission artist
+  useEffect(() => {
+    if (user.uid) {
+      setCommissionArtist(user.uid);
+    }
+  }, [user.uid]);
 
   // Function to go to previous image
   const goToPreviousImage = () => {
@@ -264,6 +313,7 @@ const CreateCommission = () => {
                     onChange={(e) =>
                       setContactInfo({ ...contactInfo, email: e.target.value })
                     }
+                    i
                     onFocus={() => setIsEditingEmail(true)}
                     onBlur={() => setIsEditingEmail(false)}
                     autoFocus
@@ -338,21 +388,23 @@ const CreateCommission = () => {
               <div className="flex items-center gap-2">
                 <InstagramSVG />
                 {isEditingInstagram ? (
-                  <input
-                    type="text"
-                    placeholder="Instagram"
-                    value={contactInfo.instagram}
-                    className="w-1/2 pl-2 border border-black rounded-md"
-                    onChange={(e) =>
-                      setContactInfo({
-                        ...contactInfo,
-                        instagram: e.target.value,
-                      })
-                    }
-                    autoFocus
-                    onFocus={() => setIsEditingInstagram(true)}
-                    onBlur={() => setIsEditingInstagram(false)}
-                  />
+                  <div className="flex">
+                    <input
+                      type="text"
+                      placeholder="Instagram"
+                      value={contactInfo.instagram}
+                      className="w-1/2 pl-2 border border-black rounded-md"
+                      onChange={(e) =>
+                        setContactInfo({
+                          ...contactInfo,
+                          instagram: e.target.value,
+                        })
+                      }
+                      autoFocus
+                      onFocus={() => setIsEditingInstagram(true)}
+                      onBlur={() => setIsEditingInstagram(false)}
+                    />
+                  </div>
                 ) : (
                   <p
                     className="text-zinc-500 w-max hover:text-pink hover:cursor-pointer"

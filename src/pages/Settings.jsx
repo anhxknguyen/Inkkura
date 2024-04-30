@@ -37,6 +37,7 @@ const Settings = () => {
     // Delete user data from database and delete account
     try {
       await deleteDoc(doc(db, "users", user.uid));
+      await deleteDoc(doc(db, "commissions", user.uid));
       const userStorageRef = ref(storage, user.uid);
       const userStorageSnapshot = await listAll(userStorageRef);
       await Promise.all(

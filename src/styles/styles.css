@@ -28,6 +28,18 @@ input[type="number"] {
   box-sizing: border-box;
 }
 
+.grid-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  justify-items: center;
+  gap: 50px;
+}
+
+.grid-item {
+  width: fill-available;
+  height: fit-content;
+}
+
 .line {
   width: 100%;
   text-align: center;
