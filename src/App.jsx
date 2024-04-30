@@ -81,11 +81,7 @@ const App = () => {
               <Route
                 key={commission.id}
                 path={`/commission/${commission.id}`}
-                element={
-                  <ProtectedRoute>
-                    <ArtistPage commission={commission} />
-                  </ProtectedRoute>
-                }
+                element={<ArtistPage commission={commission} />}
               />
             );
           })}

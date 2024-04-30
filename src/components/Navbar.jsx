@@ -60,6 +60,9 @@ const Navbar = () => {
         )}
 
         <div className="flex items-center gap-5 mx-5 my-5">
+          <Link to="/searchcommissions" className="py-2 hover:text-pink">
+            Browse
+          </Link>
           {user && (
             <Link
               to="/createCommission"
@@ -104,12 +107,12 @@ const Navbar = () => {
             </div>
           ) : (
             <div className="flex space-x-2">
-              <Link to="/signin" className="px-6 py-2 hover:text-blue-500">
+              <Link to="/signin" className="px-4 py-2 hover:text-pink">
                 Sign In
               </Link>
               <Link
                 to="/signup"
-                className="px-6 py-2 border rounded bg-zinc-100 hover:bg-zinc-200"
+                className="px-4 py-2 border rounded bg-zinc-100 hover:bg-zinc-200"
               >
                 Sign Up
               </Link>
