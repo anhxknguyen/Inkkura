@@ -11,9 +11,38 @@ import SearchCommissions from "./pages/SearchCommissions";
 import CreateCommission from "./pages/CreateCommission";
 import { useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
+import { db } from "./firebase";
+import { getDocs, collection } from "firebase/firestore";
+import ArtistPage from "./pages/ArtistPage";
 
 const App = () => {
-  const location = useLocation();
+  const [commissions, setCommissions] = useState([]);
+
+  useEffect(() => {
+    const findAllCommissions = async () => {
+      try {
+        const querySnapshot = await getDocs(collection(db, "commissions"));
+        const allCommissions = [];
+        querySnapshot.forEach((doc) => {
+          if (doc.data().primary) {
+            return;
+          }
+          allCommissions.push(doc.data());
+        });
+        const filteredCommissions = allCommissions.filter((commission) => {
+          return (
+            !commission.hasOwnProperty("primary") &&
+            commission.published === true
+          );
+        });
+        setCommissions(filteredCommissions);
+      } catch (error) {
+        console.error("Error getting commissions:", error);
+      }
+    };
+
+    findAllCommissions();
+  }, []);
 
   return (
     <AuthContextProvider>
@@ -47,6 +76,19 @@ const App = () => {
               </ProtectedRoute>
             }
           />
+          {commissions.map((commission) => {
+            return (
+              <Route
+                key={commission.id}
+                path={`/commission/${commission.id}`}
+                element={
+                  <ProtectedRoute>
+                    <ArtistPage commission={commission} />
+                  </ProtectedRoute>
+                }
+              />
+            );
+          })}
         </Routes>
       </UserDataProvider>
     </AuthContextProvider>

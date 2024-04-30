@@ -48,6 +48,7 @@ const CreateCommission = () => {
   const [isEditingTwitter, setIsEditingTwitter] = useState(false);
   const [isEditingInstagram, setIsEditingInstagram] = useState(false);
   const [isPublishedListing, setIsPublishedListing] = useState(false);
+  const [isHovered, setIsHovered] = useState(false); //Stores whether the image is being hovered over
 
   // Function to handle publish/update listing
   const handlePublish = async (e) => {
@@ -66,6 +67,7 @@ const CreateCommission = () => {
         published: true,
         artist: commissionArtist,
       });
+      location.reload();
       return;
     }
     // If document exists, update the document
@@ -78,6 +80,7 @@ const CreateCommission = () => {
       published: true,
       artist: commissionArtist,
     });
+    location.reload();
   };
 
   const reFetchCommissionData = async () => {
@@ -103,9 +106,9 @@ const CreateCommission = () => {
     const imageName = imageUpload.name;
     const imageRef = ref(storage, `${user.uid}/${imageName}`);
 
-    // Check if image already exists in imageList
-    if (imageList.includes(imageRef)) {
-      console.log("no duplicate files allowed");
+    // Check if image already exists in storage
+    if (imageOriginalURLList.includes(imageName)) {
+      console.log("Image already exists in storage");
       return;
     }
 
@@ -127,28 +130,20 @@ const CreateCommission = () => {
   };
 
   // Function to delete image
-  const deleteCurrentImage = () => {
+  const deleteImage = (index) => {
     if (imageList.length === 0) return;
-    const currentImageUrl = imageList[currentIndex];
+    const currentImageUrl = imageList[index];
     const imageRef = ref(storage, currentImageUrl);
     setDeleting(true);
-    deleteObject(imageRef)
-      .then(() => {
-        setImageList((prev) => prev.filter((url) => url !== currentImageUrl)); // Remove URL from imageList
-        setImageOriginalURLList(
-          (prev) =>
-            prev.filter((url) => url !== imageOriginalURLList[currentIndex]) // Remove original file name from imageOriginalURLList
-        );
-        setCurrentIndex((prevIndex) =>
-          prevIndex === imageList.length - 1 ? 0 : prevIndex
-        );
-      })
-      .catch((error) => {
-        console.error("Error deleting image:", error);
-      })
-      .finally(() => {
-        setDeleting(false);
-      });
+    setImageList((prev) => prev.filter((url) => url !== currentImageUrl)); // Remove URL from imageList
+    setImageOriginalURLList(
+      (prev) => prev.filter((url) => url !== imageOriginalURLList[index]) // Remove original file name from imageOriginalURLList
+    );
+    setCurrentIndex((prevIndex) =>
+      prevIndex === imageList.length - 1 ? 0 : prevIndex
+    );
+
+    setDeleting(false);
   };
 
   // useEffect to list all images at start of render
@@ -440,49 +435,59 @@ const CreateCommission = () => {
           </div>
           <div id="uploaded-files" className="text-sm">
             {imageOriginalURLList.map((url, index) => (
-              <p
-                key={index}
-                className="hover:text-pink hover:cursor-pointer w-fit"
-                onClick={() => {
-                  setCurrentIndex(index);
-                }}
-              >
-                {index + 1}. {url}
-              </p>
+              <div className="flex gap-6">
+                <p
+                  key={index}
+                  className=" hover:text-pink hover:cursor-pointer w-fit"
+                  onClick={() => {
+                    setCurrentIndex(index);
+                  }}
+                >
+                  {index + 1}. {url}
+                </p>
+                <span className="text-red-500 hover:text-red-700">
+                  <button
+                    onClick={() => deleteImage(index)}
+                    disabled={deleting}
+                  >
+                    &#10005;
+                  </button>
+                </span>
+              </div>
             ))}
           </div>
           <div
-            id="preview"
-            className="border border-black rounded-md h-preview"
+            className="relative w-full mb-8"
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
           >
-            {imageList.length > 0 && (
-              <img
-                src={imageList[currentIndex]}
-                className="object-contain w-full h-full"
-              />
-            )}
-          </div>
-          <div className="flex justify-between">
             <button
               onClick={goToPreviousImage}
-              className="w-1/5 bg-gray-200 rounded-full hover:bg-gray-300"
+              className="absolute z-10 w-10 h-10 transform -translate-y-1/2 bg-gray-200 border rounded-full left-2 top-1/2 hover:bg-gray-300"
+              style={{ display: isHovered ? "block" : "none" }}
             >
               &lt;
             </button>
-            <button
-              className="w-1/12 px-2 py-1 text-white bg-red-500 rounded-full hover:bg-red-600"
-              onClick={deleteCurrentImage}
-              disabled={deleting}
+            <div
+              id="preview"
+              className="relative border border-black rounded-md h-preview"
             >
-              x
-            </button>
-            <button
-              onClick={goToNextImage}
-              className="w-1/5 bg-gray-200 rounded-full hover:bg-gray-300"
-            >
-              &gt;
-            </button>
+              {imageList.length > 0 && (
+                <img
+                  src={imageList[currentIndex]}
+                  className="object-contain w-full h-full"
+                />
+              )}
+              <button
+                onClick={goToNextImage}
+                className="absolute z-10 w-10 h-10 transform -translate-y-1/2 bg-gray-200 border rounded-full right-2 top-1/2 hover:bg-gray-300"
+                style={{ display: isHovered ? "block" : "none" }}
+              >
+                &gt;
+              </button>
+            </div>
           </div>
+
           <button
             onClick={handlePublish}
             className="self-end w-1/4 px-4 py-4 mt-2 text-sm bg-blue-700 border rounded-md font-regular min-w-32 text-whitebg hover:bg-blue-600"

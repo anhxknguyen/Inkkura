@@ -1,6 +1,7 @@
 import { db } from "../firebase";
 import { doc, getDoc } from "firebase/firestore";
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 
 const CommissionCard = ({ commission }) => {
   const title = commission.title;
@@ -32,10 +33,13 @@ const CommissionCard = ({ commission }) => {
   }, []);
 
   return (
-    <div className="rounded-md grid-item">
+    <Link
+      to={`/commission/${commission.id}`}
+      className="p-2 rounded-md hover:bg-zinc-100 grid-item"
+    >
       <div className="flex flex-col gap-1">
         <img
-          className="object-cover h-64 rounded-md hover:object-contain bg-zinc-200"
+          className="object-cover h-64 rounded-md hover:object-contain bg-zinc-100"
           src={images[0]}
         />
         <div className="flex items-center justify-between text-sm">
@@ -49,7 +53,7 @@ const CommissionCard = ({ commission }) => {
           Estimated Completion: {estimatedCompletion} days
         </div>
       </div>
-    </div>
+    </Link>
   );
 };
 

@@ -34,8 +34,6 @@ const SearchCommissions = () => {
     findAllCommissions();
   }, []);
 
-  console.log(commissions);
-
   return (
     <div className="mb-32">
       <Navbar />
