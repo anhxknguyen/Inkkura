@@ -6,6 +6,7 @@ import { db, storage } from "../firebase";
 import { checkDisplayNameExists } from "../utilFunc/checkDisplayNameExists";
 import { collection, doc, updateDoc, deleteDoc } from "firebase/firestore";
 import { ref, deleteObject, listAll } from "firebase/storage";
+import { useNavigate } from "react-router-dom";
 
 //Need to add email update functionality
 const Settings = () => {
@@ -14,6 +15,7 @@ const Settings = () => {
   const [displayName, setDisplayName] = useState(userData.displayName || "");
   const [error, setError] = useState("");
   const [isVerified, setisVerified] = useState(false);
+  const navigate = useNavigate();
 
   // useEffect to update displayName state when userData.displayName changes
   useEffect(() => {
@@ -30,6 +32,7 @@ const Settings = () => {
     const deletionConfirmation = confirm(
       "Are you sure you want to delete your account?"
     );
+    console.log(deletionConfirmation);
     if (deletionConfirmation == false) {
       return;
     }
@@ -45,6 +48,7 @@ const Settings = () => {
       );
 
       await deleteAccount();
+      navigate("/");
     } catch (error) {
       if (error.code === "auth/requires-recent-login") {
         alert("Please log out and log back in to delete your account.");
