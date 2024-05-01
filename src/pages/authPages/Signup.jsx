@@ -34,6 +34,7 @@ const Signup = () => {
           uid: cred.user.uid,
           email: cred.user.email,
           onboarded: false,
+          commissions: [],
         });
       });
       //redirects to onboarding page

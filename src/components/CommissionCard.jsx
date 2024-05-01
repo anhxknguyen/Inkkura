@@ -2,34 +2,48 @@ import { db } from "../firebase";
 import { doc, getDoc } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { ref, listAll, getDownloadURL } from "firebase/storage";
+import { storage } from "../firebase";
 
 const CommissionCard = ({ commission }) => {
   const title = commission.title;
   const priceRange = commission.priceRange;
   const artistUID = commission.artist;
-  const images = commission.images;
   const estimatedCompletion = 14;
   const [artistDisplayName, setArtistDisplayName] = useState(null);
+  const [images, setImages] = useState([]);
 
   useEffect(() => {
-    const fetchArtistDisplayName = async () => {
+    const fetchData = async () => {
       try {
         const artistDoc = doc(db, "users", artistUID);
         const artistSnapshot = await getDoc(artistDoc);
+        let displayName = "Unknown Artist";
+
         if (artistSnapshot.exists()) {
           const artistData = artistSnapshot.data();
-          const displayName = artistData.displayName;
-          setArtistDisplayName(displayName);
-        } else {
-          setArtistDisplayName("Unknown Artist");
+          displayName = artistData.displayName;
+        }
+
+        setArtistDisplayName(displayName);
+
+        const imagesRef = ref(storage, `${artistUID}/${commission.id}`);
+        const imagesList = await listAll(imagesRef);
+
+        if (imagesList.items.length > 0) {
+          const allImages = await Promise.all(
+            imagesList.items.map(async (image) => {
+              return getDownloadURL(image);
+            })
+          );
+          setImages(allImages);
         }
       } catch (error) {
-        console.error("Error fetching artist display name:", error);
-        setArtistDisplayName("Unknown Artist");
+        console.error("Error fetching data:", error);
       }
     };
 
-    fetchArtistDisplayName();
+    fetchData();
   }, []);
 
   return (

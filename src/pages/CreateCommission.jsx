@@ -1,13 +1,7 @@
 import Navbar from "../components/Navbar";
 import { useEffect, useState } from "react";
 import { db, storage } from "../firebase";
-import {
-  ref,
-  uploadBytes,
-  getDownloadURL,
-  listAll,
-  deleteObject,
-} from "firebase/storage";
+import { ref, uploadString } from "firebase/storage";
 import { UserAuth } from "../context/authContext";
 import { useUserData } from "../context/userDataContext";
 import { doc, setDoc, updateDoc, getDoc } from "firebase/firestore";
@@ -16,6 +10,7 @@ import EmailSVG from "../assets/EmailSVG";
 import TwitterSVG from "../assets/TwitterSVG";
 import InstagramSVG from "../assets/InstagramSVG";
 import { v4 } from "uuid";
+import { useLocation, useNavigate } from "react-router-dom";
 
 const CreateCommission = () => {
   const [imageUpload, setImageUpload] = useState(null); //Stores uploaded image
@@ -24,13 +19,19 @@ const CreateCommission = () => {
   //State to store uploading and deleting status. Used to prevent multiple uploads/deletes (spamming)
   const [uploading, setUploading] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [commissionID, setCommissionID] = useState("");
 
   //User and Commission Data
   const { user } = UserAuth();
   let { userData } = useUserData();
   const [commissionData, setCommissionData] = useState({}); //Stores commission data
+  const [imageListRef, setImageListRef] = useState(
+    ref(storage, `${user.uid}/${commissionID}`)
+  );
+  useEffect(() => {
+    setImageListRef(ref(storage, `${user.uid}/${commissionID}`));
+  }, [commissionID]);
 
-  const imageListRef = ref(storage, `${user.uid}/`);
   const [imageList, setImageList] = useState([]); // stores image URLs as it is in the database
   const [imageOriginalURLList, setImageOriginalURLList] = useState([]); //stores image URLS as it is when uploaded by user
 
@@ -47,40 +48,65 @@ const CreateCommission = () => {
   const [isEditingDiscord, setIsEditingDiscord] = useState(false);
   const [isEditingTwitter, setIsEditingTwitter] = useState(false);
   const [isEditingInstagram, setIsEditingInstagram] = useState(false);
-  const [isPublishedListing, setIsPublishedListing] = useState(false);
   const [isHovered, setIsHovered] = useState(false); //Stores whether the image is being hovered over
+  const navigate = useNavigate();
+  const [isPublishing, setIsPublishing] = useState(false);
 
-  // Function to handle publish/update listing
+  // Function to handle publish
   const handlePublish = async (e) => {
     e.preventDefault();
-    const commmissionsDocRef = doc(db, "commissions", user.uid);
-    const docSnapshot = await getDoc(commmissionsDocRef);
+    const newCommissionID = v4(); // Generate a new commission ID
+    setCommissionID(newCommissionID); // Update the commission ID state
+    setIsPublishing(true);
+
+    const commmissionDocRef = doc(db, "commissions", newCommissionID); // Use the new commission ID
+    const docSnapshot = await getDoc(commmissionDocRef);
     // If document does not exist, create a new document
-    if (docSnapshot.exists() === false) {
-      await setDoc(doc(db, "commissions", user.uid), {
-        id: v4(),
+    if (!docSnapshot.exists()) {
+      await Promise.all(
+        imageList.map(async (image) => {
+          console.log("uploading image");
+          const imageRef = ref(
+            storage,
+            `${user.uid}/${newCommissionID}/${imageOriginalURLList[imageList.indexOf(image)]}`
+          );
+          await uploadString(imageRef, image, "data_url", {
+            contentType: "image/jpg",
+          });
+          console.log("Uploaded image");
+        })
+      );
+
+      // Create the commission document with flattened data
+      await setDoc(commmissionDocRef, {
+        id: newCommissionID,
         title: commissionTitle,
         description: commissionDescription,
         priceRange: [lowerPriceRange, upperPriceRange],
         contact: contactInfo,
-        images: imageList,
         published: true,
         artist: commissionArtist,
       });
+
+      const userCommissionsRef = doc(db, "users", user.uid);
+      const userDoc = await getDoc(userCommissionsRef);
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        const updatedCommissionsList = [...userData.commissions];
+        if (!updatedCommissionsList.includes(newCommissionID)) {
+          updatedCommissionsList.push(newCommissionID);
+          await updateDoc(userCommissionsRef, {
+            commissions: updatedCommissionsList,
+          });
+        }
+      }
+
+      navigate("/commission/" + newCommissionID);
       location.reload();
+
+      console.log("Published commission");
       return;
     }
-    // If document exists, update the document
-    await updateDoc(commmissionsDocRef, {
-      title: commissionTitle,
-      description: commissionDescription,
-      priceRange: [lowerPriceRange, upperPriceRange],
-      contact: contactInfo,
-      images: imageList,
-      published: true,
-      artist: commissionArtist,
-    });
-    location.reload();
   };
 
   const reFetchCommissionData = async () => {
@@ -97,43 +123,10 @@ const CreateCommission = () => {
     }
   };
 
-  // Function to upload image
-  const uploadImage = () => {
-    if (imageUpload == null) {
-      console.log("fail");
-      return;
-    }
-    const imageName = imageUpload.name;
-    const imageRef = ref(storage, `${user.uid}/${imageName}`);
-
-    // Check if image already exists in storage
-    if (imageOriginalURLList.includes(imageName)) {
-      console.log("Image already exists in storage");
-      return;
-    }
-
-    // Upload image
-    setUploading(true);
-    uploadBytes(imageRef, imageUpload)
-      .then((snapshot) => {
-        getDownloadURL(snapshot.ref).then((url) => {
-          setImageList((prev) => [...prev, url]);
-          setImageOriginalURLList((prev) => [...prev, imageName]);
-        });
-      })
-      .catch((error) => {
-        console.error("Error uploading image:", error);
-      })
-      .finally(() => {
-        setUploading(false);
-      });
-  };
-
   // Function to delete image
   const deleteImage = (index) => {
     if (imageList.length === 0) return;
     const currentImageUrl = imageList[index];
-    const imageRef = ref(storage, currentImageUrl);
     setDeleting(true);
     setImageList((prev) => prev.filter((url) => url !== currentImageUrl)); // Remove URL from imageList
     setImageOriginalURLList(
@@ -146,87 +139,13 @@ const CreateCommission = () => {
     setDeleting(false);
   };
 
-  // useEffect to list all images at start of render
   useEffect(() => {
-    let isMounted = true;
-    const publishedImages = commissionData.images; // Stores published images only (not the ones in firebase storage)
-    listAll(imageListRef).then((res) => {
-      if (isMounted) {
-        const urls = []; // New array to hold image URLs
-        const originalNames = []; // New array to hold original file names
-        res.items.forEach((itemRef) => {
-          // Loop through each item in the storage
-          getDownloadURL(itemRef).then((url) => {
-            // Get download URL of each item
-            if (publishedImages && publishedImages.includes(url)) {
-              // If the image is published, add it to the lists
-              originalNames.push(itemRef.name);
-              urls.push(url);
-            } else if (publishedImages && !publishedImages.includes(url)) {
-              // If the image is not published, delete it from storage
-              deleteObject(itemRef);
-            }
-            if (publishedImages && urls.length === publishedImages.length) {
-              // Set lists after all published images are added
-              setImageList(urls);
-              setImageOriginalURLList(originalNames); // Set original file names
-            }
-          });
-        });
-      }
-    });
-    return () => {
-      isMounted = false;
-    };
-  }, [commissionData.images]);
-
-  useEffect(() => {
-    reFetchCommissionData();
-  }, []);
-
-  // useEffect to set commission title
-  useEffect(() => {
-    setCommissionTitle(commissionData.title || "");
-  }, [commissionData.title]);
-
-  // useEffect to set commission description
-  useEffect(() => {
-    setCommissionDescription(commissionData.description || "");
-  }, [commissionData.description]);
-
-  // useEffect to set price range
-  useEffect(() => {
-    setLowerPriceRange(
-      commissionData.priceRange ? commissionData.priceRange[0] : 0
-    );
-    setUpperPriceRange(
-      commissionData.priceRange ? commissionData.priceRange[1] : 0
-    );
-  }, [commissionData.priceRange]);
-
-  // useEffect to set published status
-  useEffect(() => {
-    setIsPublishedListing(commissionData.published || false);
-  }, [commissionData.published]);
-
-  // useEffect to set contact info
-  useEffect(() => {
-    setContactInfo(commissionData.contact || {});
-  }, [commissionData.contact]);
-
-  // useEffect to upload image as soon as a new file is uploaded
-  useEffect(() => {
-    if (imageUpload !== null) {
-      uploadImage();
-    }
-  }, [imageUpload]);
-
-  // useEffect to set commission artist
-  useEffect(() => {
-    if (user.uid) {
+    if (user && user.uid) {
       setCommissionArtist(user.uid);
     }
-  }, [user.uid]);
+    setImageList([]);
+    setImageOriginalURLList([]);
+  }, []);
 
   // Function to go to previous image
   const goToPreviousImage = () => {
@@ -427,7 +346,17 @@ const CreateCommission = () => {
               type="file"
               id="file-upload"
               onChange={(e) => {
-                setImageUpload(e.target.files[0]);
+                if (e.target.files[0]) {
+                  const reader = new FileReader();
+                  reader.onload = () => {
+                    setImageList((prev) => [...prev, reader.result]);
+                    setImageOriginalURLList((prev) => [
+                      ...prev,
+                      e.target.files[0].name,
+                    ]);
+                  };
+                  reader.readAsDataURL(e.target.files[0]);
+                }
               }}
               disabled={uploading}
               className="hidden"
@@ -435,13 +364,10 @@ const CreateCommission = () => {
           </div>
           <div id="uploaded-files" className="text-sm">
             {imageOriginalURLList.map((url, index) => (
-              <div className="flex gap-6">
+              <div className="flex gap-6" key={`${url}-${index}`}>
                 <p
-                  key={index}
-                  className=" hover:text-pink hover:cursor-pointer w-fit"
-                  onClick={() => {
-                    setCurrentIndex(index);
-                  }}
+                  className="hover:text-pink hover:cursor-pointer"
+                  onClick={() => setCurrentIndex(index)}
                 >
                   {index + 1}. {url}
                 </p>
@@ -492,7 +418,7 @@ const CreateCommission = () => {
             onClick={handlePublish}
             className="self-end w-1/4 px-4 py-4 mt-2 text-sm bg-blue-700 border rounded-md font-regular min-w-32 text-whitebg hover:bg-blue-600"
           >
-            {isPublishedListing ? "Update Listing" : "Publish Listing"}
+            {isPublishing ? "Publishing..." : "Publish Listing"}
           </button>
         </div>
       </div>

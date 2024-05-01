@@ -6,6 +6,8 @@ import { Link } from "react-router-dom";
 import DiscordSVG from "../assets/DiscordSVG";
 import EmailSVG from "../assets/EmailSVG";
 import TwitterSVG from "../assets/TwitterSVG";
+import { ref, listAll, getDownloadURL } from "firebase/storage";
+import { storage } from "../firebase";
 import InstagramSVG from "../assets/InstagramSVG";
 
 const ArtistPage = ({ commission }) => {
@@ -13,32 +15,44 @@ const ArtistPage = ({ commission }) => {
   const description = commission.description;
   const priceRange = commission.priceRange;
   const artistUID = commission.artist;
-  const images = commission.images;
   const contacts = commission.contact;
   const estimatedCompletion = 14;
   const [artistDisplayName, setArtistDisplayName] = useState(null);
   const [currentIndex, setCurrentIndex] = useState(0); //Stores index of current image being displayed
   const [isHovered, setIsHovered] = useState(false); //Stores whether the image is being hovered over
+  const [images, setImages] = useState([]); //Stores all images for the commission
 
   useEffect(() => {
-    const fetchArtistDisplayName = async () => {
+    const fetchData = async () => {
       try {
         const artistDoc = doc(db, "users", artistUID);
         const artistSnapshot = await getDoc(artistDoc);
+        let displayName = "Unknown Artist";
+
         if (artistSnapshot.exists()) {
           const artistData = artistSnapshot.data();
-          const displayName = artistData.displayName;
-          setArtistDisplayName(displayName);
-        } else {
-          setArtistDisplayName("Unknown Artist");
+          displayName = artistData.displayName;
+        }
+
+        setArtistDisplayName(displayName);
+
+        const imagesRef = ref(storage, `${artistUID}/${commission.id}`);
+        const imagesList = await listAll(imagesRef);
+
+        if (imagesList.items.length > 0) {
+          const allImages = await Promise.all(
+            imagesList.items.map(async (image) => {
+              return getDownloadURL(image);
+            })
+          );
+          setImages(allImages);
         }
       } catch (error) {
-        console.error("Error fetching artist display name:", error);
-        setArtistDisplayName("Unknown Artist");
+        console.error("Error fetching data:", error);
       }
     };
 
-    fetchArtistDisplayName();
+    fetchData();
   }, []);
 
   // Function to go to previous image
