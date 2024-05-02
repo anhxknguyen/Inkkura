@@ -382,6 +382,9 @@ const CreateCommission = () => {
               className="hidden"
             ></input>
           </div>
+          <div className="text-sm font-medium">
+            NOTE: The current previewed image will be your listing thumbnail.
+          </div>
           <div id="uploaded-files" className="text-sm">
             {imageOriginalURLList.map((url, index) => (
               <div className="flex gap-6" key={`${url}-${index}`}>
