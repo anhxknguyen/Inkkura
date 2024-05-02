@@ -9,11 +9,11 @@ const CommissionCard = ({ commission }) => {
   const title = commission.title;
   const priceRange = commission.priceRange;
   const artistUID = commission.artist;
-  const estimatedCompletion = 14;
   const [artistDisplayName, setArtistDisplayName] = useState(null);
   const [images, setImages] = useState([]);
   const thumbnail = commission.thumbnail;
   const [thumbnailImage, setThumbnailImage] = useState(null);
+  const deliveryTime = commission.deliveryTime;
 
   useEffect(() => {
     const fetchData = async () => {
@@ -69,9 +69,7 @@ const CommissionCard = ({ commission }) => {
           </div>
         </div>
         <div className="font-medium text-md">{title}</div>
-        <div className="text-sm">
-          Estimated Completion: {estimatedCompletion} days
-        </div>
+        <div className="text-sm">Estimated Completion: {deliveryTime} days</div>
       </div>
     </Link>
   );

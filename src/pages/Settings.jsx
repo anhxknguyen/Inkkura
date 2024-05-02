@@ -149,6 +149,7 @@ const Settings = () => {
       onboarded: true,
     });
     updateUserData({ displayName: displayName });
+    location.reload();
   };
 
   return (

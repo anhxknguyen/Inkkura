@@ -11,6 +11,7 @@ import TwitterSVG from "../assets/TwitterSVG";
 import InstagramSVG from "../assets/InstagramSVG";
 import { v4 } from "uuid";
 import { useLocation, useNavigate } from "react-router-dom";
+import { set } from "firebase/database";
 
 const CreateCommission = () => {
   const [currentIndex, setCurrentIndex] = useState(0); //Stores index of current image being displayed
@@ -28,8 +29,9 @@ const CreateCommission = () => {
   // State to store commission details
   const [commissionTitle, setCommissionTitle] = useState("");
   const [commissionDescription, setCommissionDescription] = useState("");
-  const [lowerPriceRange, setLowerPriceRange] = useState(0);
-  const [upperPriceRange, setUpperPriceRange] = useState(0);
+  const [lowerPriceRange, setLowerPriceRange] = useState();
+  const [upperPriceRange, setUpperPriceRange] = useState();
+  const [deliveryTime, setDeliveryTime] = useState();
   const [contactInfo, setContactInfo] = useState({});
   const [commissionArtist, setCommissionArtist] = useState(user.uid || "");
 
@@ -76,7 +78,8 @@ const CreateCommission = () => {
         published: true,
         artist: commissionArtist,
         imageNamesList: imageOriginalURLList,
-        thumbnail: imageOriginalURLList[0],
+        thumbnail: imageOriginalURLList[currentIndex],
+        deliveryTime: deliveryTime,
       });
 
       const userCommissionsRef = doc(db, "users", user.uid);
@@ -202,6 +205,22 @@ const CreateCommission = () => {
                     onChange={(e) => setUpperPriceRange(e.target.value)}
                   ></input>
                 </span>
+              </div>
+            </div>
+            <div className="flex flex-col">
+              <label className="font-medium">
+                {" "}
+                <label className="font-medium">Estimated Completion</label>
+              </label>
+              <div>
+                <input
+                  type="number"
+                  placeholder="10"
+                  value={deliveryTime}
+                  className="w-16 h-10 text-center border border-black rounded-md"
+                  onChange={(e) => setDeliveryTime(e.target.value)}
+                ></input>
+                <span> Days</span>
               </div>
             </div>
             <div className="flex flex-col">
@@ -340,10 +359,15 @@ const CreateCommission = () => {
                   setUploading(true);
                   if (imageOriginalURLList.includes(e.target.files[0].name)) {
                     alert("File with same name already uploaded");
+                    setUploading(false);
                     return;
                   }
                   const reader = new FileReader();
                   reader.onload = () => {
+                    if (imageOriginalURLList.includes(e.target.files[0].name)) {
+                      alert("File with same name already uploaded");
+                      return;
+                    }
                     setImageList((prev) => [...prev, reader.result]);
                     setImageOriginalURLList((prev) => [
                       ...prev,
@@ -362,7 +386,7 @@ const CreateCommission = () => {
             {imageOriginalURLList.map((url, index) => (
               <div className="flex gap-6" key={`${url}-${index}`}>
                 <p
-                  className="hover:text-pink hover:cursor-pointer"
+                  className={`${currentIndex === index ? "bg-pink text-rose-800" : ""} ${currentIndex === index ? "hover:text-whitebg" : "hover:text-pink"} p-1 rounded hover:cursor-pointer`}
                   onClick={() => setCurrentIndex(index)}
                 >
                   {index + 1}. {url}

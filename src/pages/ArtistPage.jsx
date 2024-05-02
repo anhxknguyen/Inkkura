@@ -18,14 +18,12 @@ const ArtistPage = ({ commission }) => {
   const priceRange = commission.priceRange;
   const artistUID = commission.artist;
   const contacts = commission.contact;
-  const estimatedCompletion = 14;
   const [artistDisplayName, setArtistDisplayName] = useState(null);
   const [currentIndex, setCurrentIndex] = useState(0); //Stores index of current image being displayed
   const [isHovered, setIsHovered] = useState(false); //Stores whether the image is being hovered over
   const [images, setImages] = useState([]); //Stores all images for the commission
-  const thumbnail = commission.thumbnail;
-  const [thumbnailImage, setThumbnailImage] = useState(null);
   let isOwner = false;
+  const [deliveryTime, setDeliveryTime] = commission.deliveryTime;
 
   if (user && artistUID === user.uid) {
     isOwner = true;
@@ -52,9 +50,6 @@ const ArtistPage = ({ commission }) => {
           const allImages = await Promise.all(
             imagesList.items.map(async (image) => {
               const url = await getDownloadURL(image);
-              if (image.name === thumbnail) {
-                setThumbnailImage(url);
-              }
               return url;
             })
           );
@@ -67,18 +62,6 @@ const ArtistPage = ({ commission }) => {
 
     fetchData();
   }, []);
-
-  //set thumbnail image to index 0
-  useEffect(() => {
-    if (thumbnailImage) {
-      const thumbnailIndex = images.findIndex(
-        (image) => image === thumbnailImage
-      );
-      if (thumbnailIndex !== -1) {
-        setCurrentIndex(thumbnailIndex);
-      }
-    }
-  }, [thumbnailImage]);
 
   // Function to go to previous image
   const goToPreviousImage = () => {

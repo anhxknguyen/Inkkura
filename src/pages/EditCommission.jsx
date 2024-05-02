@@ -14,7 +14,7 @@ import {
   deleteObject,
 } from "firebase/storage";
 import { storage, db } from "../firebase";
-import { doc, getDoc } from "firebase/firestore";
+import { deleteDoc, doc, getDoc } from "firebase/firestore";
 import { updateDoc } from "firebase/firestore";
 
 const EditCommission = ({ commission }) => {
@@ -23,6 +23,7 @@ const EditCommission = ({ commission }) => {
   //State to store uploading and deleting status. Used to prevent multiple uploads/deletes (spamming)
   const [uploading, setUploading] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [deletingCommission, setDeletingCommission] = useState(false);
 
   //User and Commission Data
   const { user } = UserAuth();
@@ -46,6 +47,7 @@ const EditCommission = ({ commission }) => {
   const [artistDisplayName, setArtistDisplayName] = useState(null);
   const [thumbnail, setThumbnail] = useState(commission.thumbnail);
   const [thumbnailImage, setThumbnailImage] = useState(null);
+  const [deliveryTime, setDeliveryTime] = useState(commission.deliveryTime);
 
   // State to store editing status of contact info (mainly for styling purposes)
   const [isEditingEmail, setIsEditingEmail] = useState(false);
@@ -100,13 +102,14 @@ const EditCommission = ({ commission }) => {
         description: commissionDescription,
         priceRange: [lowerPriceRange, upperPriceRange],
         contact: contactInfo,
-        thumbnail: thumbnail,
+        thumbnail: imageOriginalURLList[currentIndex],
+        deliveryTime: deliveryTime,
       });
 
       console.log("Commission updated successfully.");
       setIsUpdating(false);
       navigate("/commission/" + commission.id);
-      location.reload(); // This seems unnecessary, consider removing it
+      location.reload();
     } catch (error) {
       console.error("Error updating commission:", error);
       setIsUpdating(false);
@@ -170,7 +173,6 @@ const EditCommission = ({ commission }) => {
     fetchData();
   }, []);
 
-  //set thumbnail image to index 0
   useEffect(() => {
     if (thumbnailImage) {
       const thumbnailIndex = imageList.findIndex(
@@ -181,6 +183,35 @@ const EditCommission = ({ commission }) => {
       }
     }
   }, [thumbnailImage]);
+
+  const deleteCommission = async () => {
+    const deletionConfirmation = confirm(
+      "Are you sure you want to delete this commission listing?"
+    );
+    if (!deletionConfirmation) {
+      return;
+    }
+    setDeletingCommission(true);
+    const userDocRef = doc(db, "users", user.uid);
+    const userDocSnapshot = await getDoc(userDocRef);
+    const userDocData = userDocSnapshot.data();
+    const allUserCommissions = userDocData.commissions;
+    const updatedCommissions = allUserCommissions.filter(
+      (commissionID) => commissionID !== commission.id
+    );
+    await updateDoc(userDocRef, {
+      commissions: updatedCommissions,
+    });
+    const commmissionDocRef = doc(db, "commissions", commission.id);
+    await deleteDoc(commmissionDocRef);
+    const commissionStorageRef = ref(storage, `${user.uid}/${commission.id}`);
+    const commissionStorageSnapshot = await listAll(commissionStorageRef);
+    await Promise.all(
+      commissionStorageSnapshot.items.map((item) => deleteObject(item))
+    );
+    setDeletingCommission(false);
+    navigate("/searchCommissions");
+  };
 
   // Function to go to previous image
   const goToPreviousImage = () => {
@@ -263,6 +294,19 @@ const EditCommission = ({ commission }) => {
                     onChange={(e) => setUpperPriceRange(e.target.value)}
                   ></input>
                 </span>
+              </div>
+            </div>
+            <div className="flex flex-col">
+              <label className="font-medium">Estimated Completion</label>
+              <div>
+                <input
+                  type="number"
+                  placeholder="10"
+                  value={deliveryTime}
+                  className="w-16 h-10 text-center border border-black rounded-md"
+                  onChange={(e) => setDeliveryTime(e.target.value)}
+                ></input>
+                <span> Days</span>
               </div>
             </div>
             <div className="flex flex-col">
@@ -400,6 +444,7 @@ const EditCommission = ({ commission }) => {
                 if (e.target.files[0]) {
                   if (imageOriginalURLList.includes(e.target.files[0].name)) {
                     alert("File with same name already uploaded");
+                    setUploading(false);
                     return;
                   }
                   const reader = new FileReader();
@@ -417,11 +462,14 @@ const EditCommission = ({ commission }) => {
               className="hidden"
             ></input>
           </div>
+          <div className="text-sm font-medium">
+            NOTE: The current previewed image will be your listing thumbnail.
+          </div>
           <div id="uploaded-files" className="text-sm">
             {imageOriginalURLList.map((url, index) => (
-              <div className="flex gap-6" key={`${url}-${index}`}>
+              <div className="flex items-center gap-2" key={`${url}-${index}`}>
                 <p
-                  className="hover:text-pink hover:cursor-pointer"
+                  className={`${currentIndex === index ? "bg-pink text-rose-800" : ""} ${currentIndex === index ? "hover:text-whitebg" : "hover:text-pink"} p-1 rounded hover:cursor-pointer`}
                   onClick={() => setCurrentIndex(index)}
                 >
                   {index + 1}. {url}
@@ -438,7 +486,7 @@ const EditCommission = ({ commission }) => {
             ))}
           </div>
           <div
-            className="relative w-full mb-8"
+            className="relative w-full"
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
           >
@@ -474,13 +522,20 @@ const EditCommission = ({ commission }) => {
               )}
             </div>
           </div>
-
-          <button
-            onClick={handleUpdate}
-            className="self-end w-1/4 px-4 py-4 mt-2 text-sm bg-blue-700 border rounded-md font-regular min-w-32 text-whitebg hover:bg-blue-600"
-          >
-            {isUpdating ? "Updating..." : "Update Listing"}
-          </button>
+          <div className="flex justify-end w-full gap-2 mb-20">
+            <button
+              onClick={deleteCommission}
+              className="w-1/4 px-4 py-4 mt-2 text-sm text-red-700 border border-red-700 rounded-md min-w-32 hover:bg-red-700 hover:text-whitebg"
+            >
+              {deletingCommission ? "Deleting..." : "Delete Listing"}
+            </button>
+            <button
+              onClick={handleUpdate}
+              className="w-1/4 px-4 py-4 mt-2 text-sm bg-blue-700 border rounded-md font-regular min-w-32 text-whitebg hover:bg-blue-600"
+            >
+              {isUpdating ? "Updating..." : "Update Listing"}
+            </button>
+          </div>
         </div>
       </div>
     </div>
