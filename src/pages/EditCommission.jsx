@@ -12,6 +12,8 @@ import {
   getDownloadURL,
   uploadString,
   deleteObject,
+  updateMetadata,
+  getMetadata,
 } from "firebase/storage";
 import { storage, db } from "../firebase";
 import { deleteDoc, doc, getDoc } from "firebase/firestore";
@@ -45,8 +47,7 @@ const EditCommission = ({ commission }) => {
   const [contactInfo, setContactInfo] = useState(commission.contact);
   const [commissionArtist, setCommissionArtist] = useState(user.uid || "");
   const [artistDisplayName, setArtistDisplayName] = useState(null);
-  const [thumbnail, setThumbnail] = useState(commission.thumbnail);
-  const [thumbnailImage, setThumbnailImage] = useState(null);
+
   const [deliveryTime, setDeliveryTime] = useState(commission.deliveryTime);
 
   // State to store editing status of contact info (mainly for styling purposes)
@@ -57,6 +58,7 @@ const EditCommission = ({ commission }) => {
   const [isHovered, setIsHovered] = useState(false); //Stores whether the image is being hovered over
   const navigate = useNavigate();
   const [isUpdating, setIsUpdating] = useState(false);
+  const thumbnail = commission.thumbnail;
 
   const handleUpdate = async (e) => {
     e.preventDefault();
@@ -67,7 +69,6 @@ const EditCommission = ({ commission }) => {
       const docSnapshot = await getDoc(commmissionDocRef);
 
       // Handle case when the document doesn't exist
-
       if (!docSnapshot.exists()) {
         console.log("Commission document does not exist.");
         return;
@@ -89,10 +90,16 @@ const EditCommission = ({ commission }) => {
             storage,
             `${user.uid}/${commission.id}/${imageOriginalURLList[imageList.indexOf(image)]}`
           );
-          await uploadString(imageRef, image, "data_url", {
+          const uploadImage = await uploadString(imageRef, image, "data_url", {
             contentType: "image/jpg",
           });
-          console.log("Uploaded image");
+          const metadata = {
+            contentType: "image/jpg",
+            customMetadata: {
+              uploadTime: new Date().toISOString(), // Store current time as ISO string
+            },
+          };
+          await updateMetadata(imageRef, metadata);
         })
       );
 
@@ -132,21 +139,38 @@ const EditCommission = ({ commission }) => {
 
         const imagesRef = ref(storage, `${commissionArtist}/${commission.id}`);
         const imagesList = await listAll(imagesRef);
+        let thumbnailTracker;
 
         if (imagesList.items.length > 0) {
           const allImages = await Promise.all(
-            imagesList.items.map(async (image) => {
-              const url = await getDownloadURL(image);
-              if (image.name === thumbnail) {
-                setThumbnailImage(url);
+            imagesList.items.map(async (fileRef) => {
+              if (fileRef.name === thumbnail) {
+                thumbnailTracker = await getDownloadURL(fileRef);
               }
-              return url;
+              const url = await getDownloadURL(fileRef);
+              const metadata = await getMetadata(fileRef);
+              return { url, metadata };
             })
           );
 
+          allImages.sort((a, b) => {
+            const uploadTimeA = new Date(a.metadata.timeCreated).getTime();
+            const uploadTimeB = new Date(b.metadata.timeCreated).getTime();
+            return uploadTimeA - uploadTimeB;
+          });
+
+          const thumbnailIndex = allImages.findIndex(
+            (image) => image.url === thumbnailTracker
+          );
+
+          // Set the currentIndex to the index of the thumbnail
+          if (thumbnailIndex !== -1) {
+            setCurrentIndex(thumbnailIndex);
+          }
+
           Promise.all(
             allImages.map(async (imgUrl) => {
-              const response = await fetch(imgUrl);
+              const response = await fetch(imgUrl.url);
               const blob = await response.blob();
               return new Promise((resolve) => {
                 const reader = new FileReader();
@@ -160,10 +184,10 @@ const EditCommission = ({ commission }) => {
             setImageList(base64Strings); // Log the base64 string of the first image
           });
 
-          const allImagesOriginalURL = imagesList.items.map(
-            (image) => image.name
-          );
-          setImageOriginalURLList(allImagesOriginalURL);
+          const sortedOriginalURLs = allImages.map((img) => img.metadata.name);
+          setImageOriginalURLList(sortedOriginalURLs);
+
+          setImageOriginalURLList(sortedOriginalURLs);
         }
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -172,17 +196,6 @@ const EditCommission = ({ commission }) => {
 
     fetchData();
   }, []);
-
-  useEffect(() => {
-    if (thumbnailImage) {
-      const thumbnailIndex = imageList.findIndex(
-        (image) => image === thumbnailImage
-      );
-      if (thumbnailIndex !== -1) {
-        setCurrentIndex(thumbnailIndex);
-      }
-    }
-  }, [thumbnailImage]);
 
   const deleteCommission = async () => {
     const deletionConfirmation = confirm(

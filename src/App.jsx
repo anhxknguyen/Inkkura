@@ -49,9 +49,17 @@ const App = () => {
     <AuthContextProvider>
       <UserDataProvider>
         <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/signin" element={<Signin />} />
-          <Route path="/signup" element={<Signup />} />
+          <Route path="/" element={<Home />} key={document.location.href} />
+          <Route
+            path="/signin"
+            element={<Signin />}
+            key={document.location.href}
+          />
+          <Route
+            path="/signup"
+            element={<Signup />}
+            key={document.location.href}
+          />
           <Route
             path="onboarding"
             element={
@@ -59,6 +67,7 @@ const App = () => {
                 <Onboarding />
               </ProtectedRoute>
             }
+            key={document.location.href}
           />
           <Route
             path="/accsettings"
@@ -67,8 +76,13 @@ const App = () => {
                 <Settings />
               </ProtectedRoute>
             }
+            key={document.location.href}
           />
-          <Route path="/searchCommissions" element={<SearchCommissions />} />
+          <Route
+            path="/searchCommissions"
+            element={<SearchCommissions />}
+            key={document.location.href}
+          />
           <Route
             path="/createCommission"
             element={
@@ -76,6 +90,7 @@ const App = () => {
                 <CreateCommission />
               </ProtectedRoute>
             }
+            key={document.location.href}
           />
           {commissions.map((commission) => {
             return (
@@ -89,7 +104,7 @@ const App = () => {
           {commissions.map((commission) => {
             return (
               <Route
-                key={commission.id}
+                key={`edit-${commission.id}`}
                 path={`/editcommission/${commission.id}`}
                 element={<EditCommission commission={commission} />}
               />

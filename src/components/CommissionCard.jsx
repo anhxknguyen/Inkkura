@@ -2,8 +2,9 @@ import { db } from "../firebase";
 import { doc, getDoc } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { ref, listAll, getDownloadURL } from "firebase/storage";
+import { ref, listAll, getDownloadURL, getMetadata } from "firebase/storage";
 import { storage } from "../firebase";
+import ImageModal from "./ImageModal";
 
 const CommissionCard = ({ commission }) => {
   const title = commission.title;
@@ -14,6 +15,20 @@ const CommissionCard = ({ commission }) => {
   const thumbnail = commission.thumbnail;
   const [thumbnailImage, setThumbnailImage] = useState(null);
   const deliveryTime = commission.deliveryTime;
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isHovered, setIsHovered] = useState(false);
+
+  const [isImageOpen, setIsImageOpen] = useState(false);
+  const [modalImageUrl, setModalImageUrl] = useState(null);
+
+  const openModal = (imageUrl) => {
+    setModalImageUrl(imageUrl);
+    setIsImageOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsImageOpen(false);
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -31,18 +46,59 @@ const CommissionCard = ({ commission }) => {
 
         const imagesRef = ref(storage, `${artistUID}/${commission.id}`);
         const imagesList = await listAll(imagesRef);
+        let thumbnailTracker;
 
         if (imagesList.items.length > 0) {
           const allImages = await Promise.all(
-            imagesList.items.map(async (image) => {
-              const url = await getDownloadURL(image);
-              if (image.name === thumbnail) {
-                setThumbnailImage(url);
+            imagesList.items.map(async (fileRef) => {
+              if (fileRef.name === thumbnail) {
+                thumbnailTracker = await getDownloadURL(fileRef);
               }
-              return url;
+              const url = await getDownloadURL(fileRef);
+              const metadata = await getMetadata(fileRef);
+              return { url, metadata };
             })
           );
-          setImages(allImages);
+
+          const thumbnailRef = imagesList.items.find(
+            (image) => image.name === thumbnail
+          );
+
+          if (thumbnailRef) {
+            const thumbnailURL = await getDownloadURL(thumbnailRef);
+            setThumbnailImage(thumbnailURL);
+          }
+
+          allImages.sort((a, b) => {
+            const uploadTimeA = new Date(a.metadata.timeCreated).getTime();
+            const uploadTimeB = new Date(b.metadata.timeCreated).getTime();
+            return uploadTimeA - uploadTimeB;
+          });
+
+          const thumbnailIndex = allImages.findIndex(
+            (image) => image.url === thumbnailTracker
+          );
+
+          // Set the currentIndex to the index of the thumbnail
+          if (thumbnailIndex !== -1) {
+            setCurrentIndex(thumbnailIndex);
+          }
+
+          Promise.all(
+            allImages.map(async (imgUrl) => {
+              const response = await fetch(imgUrl.url);
+              const blob = await response.blob();
+              return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                  resolve(reader.result);
+                };
+                reader.readAsDataURL(blob);
+              });
+            })
+          ).then((base64Strings) => {
+            setImages(base64Strings); // Log the base64 string of the first image
+          });
         }
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -52,26 +108,71 @@ const CommissionCard = ({ commission }) => {
     fetchData();
   }, []);
 
+  // Function to go to previous image
+  const goToPreviousImage = () => {
+    setCurrentIndex((prevIndex) =>
+      prevIndex === 0 ? images.length - 1 : prevIndex - 1
+    );
+  };
+
+  // Function to go to next image
+  const goToNextImage = () => {
+    setCurrentIndex((prevIndex) =>
+      prevIndex === images.length - 1 ? 0 : prevIndex + 1
+    );
+  };
+
   return (
-    <Link
-      to={`/commission/${commission.id}`}
-      className="p-2 rounded-md hover:bg-zinc-100 grid-item"
-    >
-      <div className="flex flex-col gap-1">
-        <img
-          className="object-cover h-64 rounded-md hover:object-contain bg-zinc-100"
-          src={thumbnailImage}
-        />
-        <div className="flex items-center justify-between text-sm">
-          <div>{artistDisplayName}</div>
-          <div className="p-1 bg-green-200 rounded-md">
-            ${priceRange[0]} - ${priceRange[1]}
-          </div>
+    <div className="rounded-md hover:bg-zinc-100 grid-item">
+      <div className="flex flex-col">
+        <div
+          className="relative flex flex-col w-full"
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
+        >
+          <img
+            className={`h-64 rounded-md p-2 ${isHovered ? "object-contain bg-zinc-300" : "object-cover hover:bg-zinc-100"} no-select hover:cursor-pointer`}
+            onClick={() => openModal(images[currentIndex])}
+            src={images[currentIndex]}
+          />
+
+          {images.length > 1 && (
+            <button
+              onClick={goToPreviousImage}
+              className="absolute z-10 w-10 h-10 transform -translate-y-1/2 bg-gray-200 border rounded-full left-2 top-1/2 hover:bg-gray-300"
+              style={{ display: isHovered ? "block" : "none" }}
+            >
+              &lt;
+            </button>
+          )}
+
+          {images.length > 1 && (
+            <button
+              onClick={goToNextImage}
+              className="absolute z-10 w-10 h-10 transform -translate-y-1/2 bg-gray-200 border rounded-full right-2 top-1/2 hover:bg-gray-300"
+              style={{ display: isHovered ? "block" : "none" }}
+            >
+              &gt;
+            </button>
+          )}
         </div>
-        <div className="font-medium text-md">{title}</div>
-        <div className="text-sm">Estimated Completion: {deliveryTime} days</div>
+        <Link className="px-2 pb-2" to={`/commission/${commission.id}`}>
+          <div className="flex items-center justify-between text-sm">
+            <div>{artistDisplayName}</div>
+            <div className="p-1 bg-green-200 rounded-md">
+              ${priceRange[0]} - ${priceRange[1]}
+            </div>
+          </div>
+          <div className="font-medium text-md">{title}</div>
+          <div className="text-sm">
+            Estimated Completion: {deliveryTime} days
+          </div>
+        </Link>
       </div>
-    </Link>
+      {isImageOpen && (
+        <ImageModal imageUrl={modalImageUrl} onClose={closeModal} />
+      )}
+    </div>
   );
 };
 

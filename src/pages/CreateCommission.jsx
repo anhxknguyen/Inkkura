@@ -1,7 +1,7 @@
 import Navbar from "../components/Navbar";
 import { useEffect, useState } from "react";
 import { db, storage } from "../firebase";
-import { ref, uploadString } from "firebase/storage";
+import { ref, uploadString, updateMetadata } from "firebase/storage";
 import { UserAuth } from "../context/authContext";
 import { useUserData } from "../context/userDataContext";
 import { doc, setDoc, updateDoc, getDoc } from "firebase/firestore";
@@ -11,7 +11,6 @@ import TwitterSVG from "../assets/TwitterSVG";
 import InstagramSVG from "../assets/InstagramSVG";
 import { v4 } from "uuid";
 import { useLocation, useNavigate } from "react-router-dom";
-import { set } from "firebase/database";
 
 const CreateCommission = () => {
   const [currentIndex, setCurrentIndex] = useState(0); //Stores index of current image being displayed
@@ -61,10 +60,17 @@ const CreateCommission = () => {
             storage,
             `${user.uid}/${newCommissionID}/${imageOriginalURLList[imageList.indexOf(image)]}`
           );
-          await uploadString(imageRef, image, "data_url", {
+
+          const uploadImage = await uploadString(imageRef, image, "data_url", {
             contentType: "image/jpg",
           });
-          console.log("Uploaded image");
+          const metadata = {
+            contentType: "image/jpg",
+            customMetadata: {
+              uploadTime: new Date().toISOString(), // Store current time as ISO string
+            },
+          };
+          await updateMetadata(imageRef, metadata);
         })
       );
 
@@ -99,20 +105,6 @@ const CreateCommission = () => {
       location.reload();
       console.log("Published commission");
       return;
-    }
-  };
-
-  const reFetchCommissionData = async () => {
-    try {
-      if (user && user.uid) {
-        const docRef = doc(db, "commissions", user.uid);
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-          setCommissionData(docSnap.data());
-        }
-      }
-    } catch (error) {
-      console.error("Error fetching commission data:", error);
     }
   };
 

@@ -79,7 +79,7 @@ const Navbar = () => {
             <div
               onClick={() => setShowDropdown(!showDropdown)}
               ref={dropdownRef}
-              className="relative flex items-center justify-between gap-10"
+              className="relative z-50 flex items-center justify-between gap-10"
             >
               <button
                 id="user-settings"
