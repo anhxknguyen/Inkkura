@@ -37,7 +37,7 @@ const SearchCommissions = () => {
   return (
     <div className="mb-32">
       <Navbar />
-      <div className="mx-5 grid-container">
+      <div className="mx-10 grid-container">
         {commissions.map((commission) => {
           return <CommissionCard key={commission.id} commission={commission} />;
         })}

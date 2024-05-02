@@ -16,6 +16,7 @@ import {
 import { ref, deleteObject, listAll } from "firebase/storage";
 import { useNavigate } from "react-router-dom";
 import { EmailAuthProvider, reauthenticateWithCredential } from "firebase/auth";
+import CommissionCard from "../components/CommissionCard";
 
 //Need to add email update functionality
 const Settings = () => {
@@ -26,6 +27,7 @@ const Settings = () => {
   const [isVerified, setisVerified] = useState(false);
   const navigate = useNavigate();
   const [isDeleting, setIsDeleting] = useState(false);
+  const [userCommissionsList, setUserCommissionsList] = useState([]);
 
   // useEffect to update displayName state when userData.displayName changes
   useEffect(() => {
@@ -75,7 +77,6 @@ const Settings = () => {
       // Iterate through each commissions folder
       await Promise.all(
         userStorageSnapshot.prefixes.map(async (commissionFolderRef) => {
-          // Check if the folder name is "commissions"
           // List all items (files) within the commissions folder
           const commissionSnapshot = await listAll(commissionFolderRef);
 
@@ -100,6 +101,28 @@ const Settings = () => {
       setIsDeleting(false);
     }
   };
+
+  //find all commissions that the user owns
+  const fetchCommissions = async () => {
+    try {
+      const fetchedCommissions = [];
+      const commissionsRef = collection(db, "commissions");
+      const querySnapshot = await getDocs(
+        query(commissionsRef, where("artist", "==", user.uid))
+      );
+      console.log(querySnapshot.docs);
+      querySnapshot.forEach((commission) => {
+        fetchedCommissions.push(commission.data());
+      });
+      setUserCommissionsList(fetchedCommissions);
+    } catch (error) {
+      console.error("Error getting commissions:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchCommissions();
+  }, []);
 
   // Function to handle displayName changes
   const displayNameSubmit = async (e) => {
@@ -129,60 +152,83 @@ const Settings = () => {
   };
 
   return (
-    <div className="h-full">
+    <div>
       <Navbar />
-      <div className="flex items-center justify-start mx-5 text-lg">
-        <form className="flex flex-col w-full">
-          <div className="flex flex-col">
-            <label className="font-medium">Display Name</label>
-            <input
-              type="text"
-              value={displayName}
-              placeholder="Display Name"
-              className={`w-1/4 py-3 pl-3 my-2 border rounded-md ${
-                error === "display-name-exists" ||
-                error === "display-name-empty"
-                  ? "border-red-500"
-                  : ""
-              }`}
-              onChange={(e) => {
-                setDisplayName(e.target.value);
-                setError("");
-              }}
-            />
-          </div>
-          {error && (
-            <p className="text-sm text-red-500">Error: {getErrorMsg(error)}</p>
-          )}
-          <div className="w-1/4 font-medium">
-            Verification Status:{" "}
-            {isVerified ? (
-              <span className="font-normal text-green-500">Email Verified</span>
-            ) : (
-              <span className="font-normal text-red-500">
-                Email Not Verified
-              </span>
+      <div className="flex flex-col h-full gap-10">
+        <div className="flex items-center justify-start mx-10 text-lg">
+          <form className="flex flex-col w-full">
+            <div className="flex flex-col">
+              <label className="font-medium">Display Name</label>
+              <input
+                type="text"
+                value={displayName}
+                placeholder="Display Name"
+                className={`w-1/4 py-3 pl-3 my-2 border rounded-md ${
+                  error === "display-name-exists" ||
+                  error === "display-name-empty"
+                    ? "border-red-500"
+                    : ""
+                }`}
+                onChange={(e) => {
+                  setDisplayName(e.target.value);
+                  setError("");
+                }}
+              />
+            </div>
+            {error && (
+              <p className="text-sm text-red-500">
+                Error: {getErrorMsg(error)}
+              </p>
             )}
+            <div className="w-1/4 font-medium">
+              Verification Status:{" "}
+              {isVerified ? (
+                <span className="font-normal text-green-500">
+                  Email Verified
+                </span>
+              ) : (
+                <span className="font-normal text-red-500">
+                  Email Not Verified
+                </span>
+              )}
+            </div>
+            <div className="flex w-1/4 gap-1">
+              <button
+                type="delete"
+                className="w-1/2 px-2 py-3 my-2 text-red-700 border border-red-700 rounded-md hover:bg-red-700 hover:text-whitebg"
+                onClick={handleDelete}
+              >
+                {isDeleting ? "Deleting..." : "Delete Account"}
+              </button>
+              <button
+                type="submit"
+                className="w-1/2 px-2 py-3 my-2 border rounded-md text-whitebg bg-zinc-700 hover:bg-zinc-600"
+                onClick={displayNameSubmit}
+              >
+                Save Changes
+              </button>
+            </div>
+          </form>
+        </div>
+        <div className="flex flex-col gap-4">
+          <div className="flex items-start mx-10 text-3xl font-medium">
+            My Commission Listings
           </div>
-          <div className="w-1/4">
-            <button
-              type="delete"
-              className="w-1/2 px-2 py-3 my-2 bg-red-700 border rounded-md text-whitebg hover:bg-red-600"
-              onClick={handleDelete}
-            >
-              {isDeleting ? "Deleting..." : "Delete Account"}
-            </button>
-            <button
-              type="submit"
-              className="w-1/2 px-2 py-3 my-2 border rounded-md text-whitebg bg-zinc-700 hover:bg-zinc-600"
-              onClick={displayNameSubmit}
-            >
-              Save Changes
-            </button>
-          </div>
-        </form>
+          {userCommissionsList.length > 0 ? (
+            <div className="mx-10 grid-container">
+              {userCommissionsList.map((commission) => {
+                return (
+                  <CommissionCard key={commission.id} commission={commission} />
+                );
+              })}
+            </div>
+          ) : (
+            <div className="mx-10 mt-5">
+              You do not have any commissions listed.
+            </div>
+          )}
+        </div>
       </div>
-      <div className="flex items-start justify-start mx-5 text-lg"></div>
     </div>
   );
 };

@@ -14,6 +14,7 @@ import { useEffect, useState } from "react";
 import { db } from "./firebase";
 import { getDocs, collection } from "firebase/firestore";
 import ArtistPage from "./pages/ArtistPage";
+import EditCommission from "./pages/EditCommission";
 
 const App = () => {
   const [commissions, setCommissions] = useState([]);
@@ -82,6 +83,15 @@ const App = () => {
                 key={commission.id}
                 path={`/commission/${commission.id}`}
                 element={<ArtistPage commission={commission} />}
+              />
+            );
+          })}
+          {commissions.map((commission) => {
+            return (
+              <Route
+                key={commission.id}
+                path={`/editcommission/${commission.id}`}
+                element={<EditCommission commission={commission} />}
               />
             );
           })}

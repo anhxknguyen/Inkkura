@@ -12,6 +12,8 @@ const CommissionCard = ({ commission }) => {
   const estimatedCompletion = 14;
   const [artistDisplayName, setArtistDisplayName] = useState(null);
   const [images, setImages] = useState([]);
+  const thumbnail = commission.thumbnail;
+  const [thumbnailImage, setThumbnailImage] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -33,7 +35,11 @@ const CommissionCard = ({ commission }) => {
         if (imagesList.items.length > 0) {
           const allImages = await Promise.all(
             imagesList.items.map(async (image) => {
-              return getDownloadURL(image);
+              const url = await getDownloadURL(image);
+              if (image.name === thumbnail) {
+                setThumbnailImage(url);
+              }
+              return url;
             })
           );
           setImages(allImages);
@@ -54,7 +60,7 @@ const CommissionCard = ({ commission }) => {
       <div className="flex flex-col gap-1">
         <img
           className="object-cover h-64 rounded-md hover:object-contain bg-zinc-100"
-          src={images[0]}
+          src={thumbnailImage}
         />
         <div className="flex items-center justify-between text-sm">
           <div>{artistDisplayName}</div>

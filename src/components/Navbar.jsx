@@ -40,6 +40,7 @@ const Navbar = () => {
       //If user is on a protected route, redirect to home page. Else, reload the page.
       if (protectedRoutes.includes(pathname)) {
         navigate("/");
+        window.location.reload();
       } else {
         window.location.reload();
       }
@@ -52,14 +53,17 @@ const Navbar = () => {
     <nav>
       <ul className="flex justify-between">
         {pathname !== "/" ? (
-          <Link to="/" className="mx-5 my-5 text-3xl font-bold hover:text-pink">
+          <Link
+            to="/"
+            className="mx-10 my-5 text-3xl font-bold hover:text-pink"
+          >
             Inkkura
           </Link>
         ) : (
           <div></div>
         )}
 
-        <div className="flex items-center gap-5 mx-5 my-5">
+        <div className="flex items-center gap-5 mx-10 my-5">
           <Link to="/searchcommissions" className="py-2 hover:text-pink">
             Browse
           </Link>
