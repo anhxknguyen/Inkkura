@@ -11,6 +11,7 @@ import { storage } from "../firebase";
 import InstagramSVG from "../assets/InstagramSVG";
 import { UserAuth } from "../context/authContext";
 import { getMetadata } from "firebase/storage";
+import ImageModal from "../components/ImageModal";
 
 const ArtistPage = ({ commission }) => {
   const title = commission.title;
@@ -27,6 +28,15 @@ const ArtistPage = ({ commission }) => {
   let isOwner = false;
   const [deliveryTime, setDeliveryTime] = commission.deliveryTime;
   const thumbnail = commission.thumbnail;
+  const [isImageOpen, setIsImageOpen] = useState(false);
+
+  const openModal = () => {
+    setIsImageOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsImageOpen(false);
+  };
 
   if (user && artistUID === user.uid) {
     isOwner = true;
@@ -169,7 +179,8 @@ const ArtistPage = ({ commission }) => {
                 {images.length > 0 && (
                   <img
                     src={images[currentIndex]}
-                    className="object-contain w-full h-full"
+                    className="object-contain w-full h-full no-select hover:cursor-pointer"
+                    onClick={() => openModal(images[currentIndex])}
                   />
                 )}
               </div>
@@ -196,6 +207,13 @@ const ArtistPage = ({ commission }) => {
           </div>
         </div>
       </div>
+      {isImageOpen && (
+        <ImageModal
+          currIndex={currentIndex}
+          onClose={closeModal}
+          images={images}
+        />
+      )}
     </div>
   );
 };

@@ -9,6 +9,7 @@ import DiscordSVG from "../assets/DiscordSVG";
 import EmailSVG from "../assets/EmailSVG";
 import TwitterSVG from "../assets/TwitterSVG";
 import InstagramSVG from "../assets/InstagramSVG";
+import LoadingSVG from "../assets/LoadingSVG";
 import { v4 } from "uuid";
 import { useLocation, useNavigate } from "react-router-dom";
 
@@ -439,7 +440,16 @@ const CreateCommission = () => {
             onClick={handlePublish}
             className="self-end w-1/4 px-4 py-4 mt-2 text-sm bg-blue-700 border rounded-md font-regular min-w-32 text-whitebg hover:bg-blue-600"
           >
-            {isPublishing ? "Publishing..." : "Publish Listing"}
+            {isPublishing ? (
+              <div className="flex items-center justify-center gap-2">
+                <span className="animate-spin">
+                  <LoadingSVG />
+                </span>
+                <span>Publishing...</span>
+              </div>
+            ) : (
+              "Publish Listing"
+            )}
           </button>
         </div>
       </div>

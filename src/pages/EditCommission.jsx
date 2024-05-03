@@ -3,6 +3,7 @@ import EmailSVG from "../assets/EmailSVG";
 import DiscordSVG from "../assets/DiscordSVG";
 import TwitterSVG from "../assets/TwitterSVG";
 import InstagramSVG from "../assets/InstagramSVG";
+import LoadingSVG from "../assets/LoadingSVG";
 import { UserAuth } from "../context/authContext";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
@@ -538,15 +539,33 @@ const EditCommission = ({ commission }) => {
           <div className="flex justify-end w-full gap-2 mb-20">
             <button
               onClick={deleteCommission}
-              className="w-1/4 px-4 py-4 mt-2 text-sm text-red-700 border border-red-700 rounded-md min-w-32 hover:bg-red-700 hover:text-whitebg"
+              className={`w-1/4 px-4 py-4 mt-2 text-sm text-red-700 border border-red-700 rounded-md min-w-32 hover:bg-red-700 hover:text-whitebg ${deletingCommission && "bg-red-700 text-whitebg"}`}
             >
-              {deletingCommission ? "Deleting..." : "Delete Listing"}
+              {deletingCommission ? (
+                <div className="flex items-center justify-center gap-2">
+                  <span className="animate-spin">
+                    <LoadingSVG />
+                  </span>
+                  <span>Deleting...</span>
+                </div>
+              ) : (
+                "Delete Listing"
+              )}
             </button>
             <button
               onClick={handleUpdate}
               className="w-1/4 px-4 py-4 mt-2 text-sm bg-blue-700 border rounded-md font-regular min-w-32 text-whitebg hover:bg-blue-600"
             >
-              {isUpdating ? "Updating..." : "Update Listing"}
+              {isUpdating ? (
+                <div className="flex items-center justify-center gap-2">
+                  <span className="animate-spin">
+                    <LoadingSVG />
+                  </span>
+                  <span>Updating...</span>
+                </div>
+              ) : (
+                "Update Listing"
+              )}
             </button>
           </div>
         </div>

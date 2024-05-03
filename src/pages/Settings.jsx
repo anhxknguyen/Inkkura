@@ -17,6 +17,7 @@ import { ref, deleteObject, listAll } from "firebase/storage";
 import { useNavigate } from "react-router-dom";
 import { EmailAuthProvider, reauthenticateWithCredential } from "firebase/auth";
 import CommissionCard from "../components/CommissionCard";
+import LoadingSVG from "../assets/LoadingSVG";
 
 //Need to add email update functionality
 const Settings = () => {
@@ -196,10 +197,19 @@ const Settings = () => {
             <div className="flex w-1/4 gap-1">
               <button
                 type="delete"
-                className="w-1/2 px-2 py-3 my-2 text-red-700 border border-red-700 rounded-md hover:bg-red-700 hover:text-whitebg"
+                className={`w-1/2 px-2 py-3 my-2 text-red-700 border border-red-700 rounded-md hover:bg-red-700 hover:text-whitebg ${deletingCommission && "bg-red-700 text-whitebg"}`}
                 onClick={handleDelete}
               >
-                {isDeleting ? "Deleting..." : "Delete Account"}
+                {isDeleting ? (
+                  <div className="flex items-center justify-center gap-2">
+                    <span className="animate-spin">
+                      <LoadingSVG />
+                    </span>
+                    <span>Deleting...</span>
+                  </div>
+                ) : (
+                  "Delete Account"
+                )}
               </button>
               <button
                 type="submit"
