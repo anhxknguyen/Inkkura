@@ -197,7 +197,7 @@ const Settings = () => {
             <div className="flex w-1/4 gap-1">
               <button
                 type="delete"
-                className={`w-1/2 px-2 py-3 my-2 text-red-700 border border-red-700 rounded-md hover:bg-red-700 hover:text-whitebg ${deletingCommission && "bg-red-700 text-whitebg"}`}
+                className={`w-1/2 px-2 py-3 my-2 text-red-700 border border-red-700 rounded-md hover:bg-red-700 hover:text-whitebg ${deleteAccount && "bg-red-700 text-whitebg"}`}
                 onClick={handleDelete}
               >
                 {isDeleting ? (
