@@ -111,7 +111,6 @@ const Settings = () => {
       const querySnapshot = await getDocs(
         query(commissionsRef, where("artist", "==", user.uid))
       );
-      console.log(querySnapshot.docs);
       querySnapshot.forEach((commission) => {
         fetchedCommissions.push(commission.data());
       });
