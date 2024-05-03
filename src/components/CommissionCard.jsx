@@ -5,8 +5,11 @@ import { Link } from "react-router-dom";
 import { ref, listAll, getDownloadURL, getMetadata } from "firebase/storage";
 import { storage } from "../firebase";
 import ImageModal from "./ImageModal";
+import { UserAuth } from "../context/authContext";
+import PaintbrushSVG from "../assets/PaintbrushSVG";
 
 const CommissionCard = ({ commission }) => {
+  const { user } = UserAuth();
   const title = commission.title;
   const priceRange = commission.priceRange;
   const artistUID = commission.artist;
@@ -19,10 +22,8 @@ const CommissionCard = ({ commission }) => {
   const [isHovered, setIsHovered] = useState(false);
 
   const [isImageOpen, setIsImageOpen] = useState(false);
-  const [modalImageUrl, setModalImageUrl] = useState(null);
 
-  const openModal = (imageUrl) => {
-    setModalImageUrl(imageUrl);
+  const openModal = () => {
     setIsImageOpen(true);
   };
 
@@ -123,7 +124,7 @@ const CommissionCard = ({ commission }) => {
   };
 
   return (
-    <div className="rounded-md hover:bg-zinc-100 grid-item">
+    <div className={`rounded-md hover:bg-zinc-100 grid-item `}>
       <div className="flex flex-col">
         <div
           className="relative flex flex-col w-full"
@@ -135,6 +136,11 @@ const CommissionCard = ({ commission }) => {
             onClick={() => openModal(images[currentIndex])}
             src={images[currentIndex]}
           />
+          {user.uid === artistUID && (
+            <span className="absolute text-2xl border rounded-md border-rose-800 text-rose-200 bg-rose-50 top-4 right-4">
+              <PaintbrushSVG />
+            </span>
+          )}
 
           {images.length > 1 && (
             <button
@@ -170,7 +176,11 @@ const CommissionCard = ({ commission }) => {
         </Link>
       </div>
       {isImageOpen && (
-        <ImageModal imageUrl={modalImageUrl} onClose={closeModal} />
+        <ImageModal
+          currIndex={currentIndex}
+          onClose={closeModal}
+          images={images}
+        />
       )}
     </div>
   );

@@ -70,7 +70,7 @@ const Navbar = () => {
           {user && (
             <Link
               to="/createCommission"
-              className="px-4 py-2 border border-black rounded hover:bg-pink hover:cursor-pointer"
+              className="px-4 py-2 border border-black rounded hover:bg-pink hover:border-rose-800 hover:text-rose-800 hover:cursor-pointer"
             >
               +
             </Link>
@@ -84,7 +84,7 @@ const Navbar = () => {
               <button
                 id="user-settings"
                 type="button"
-                className="px-4 py-2 bg-white border border-black rounded-md min-w-32 hover:bg-pink"
+                className="px-4 py-2 bg-white border border-black rounded-md min-w-32 hover:bg-pink hover:border-rose-800 hover:text-rose-800"
               >
                 {displayName || user.email}
               </button>
@@ -93,14 +93,14 @@ const Navbar = () => {
                   <li>
                     <Link
                       to="/accsettings"
-                      className="block w-full px-4 py-2 hover:bg-pink hover:cursor-pointer"
+                      className="block w-full px-4 py-2 hover:bg-pink hover:border-rose-800 hover:text-rose-800 hover:cursor-pointer"
                     >
                       Settings
                     </Link>
                   </li>
                   <li>
                     <button
-                      className="block w-full px-4 py-2 text-left hover:bg-pink"
+                      className="block w-full px-4 py-2 text-left hover:bg-pink hover:border-rose-800 hover:text-rose-800"
                       onClick={handleLogout}
                     >
                       Sign Out
