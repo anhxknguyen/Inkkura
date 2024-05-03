@@ -13,7 +13,7 @@ import { useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { db } from "./firebase";
 import { getDocs, collection } from "firebase/firestore";
-import ArtistPage from "./pages/ArtistPage";
+import CommissionPage from "./pages/CommissionPage";
 import EditCommission from "./pages/EditCommission";
 
 const App = () => {
@@ -97,7 +97,7 @@ const App = () => {
               <Route
                 key={commission.id}
                 path={`/commission/${commission.id}`}
-                element={<ArtistPage commission={commission} />}
+                element={<CommissionPage commission={commission} />}
               />
             );
           })}

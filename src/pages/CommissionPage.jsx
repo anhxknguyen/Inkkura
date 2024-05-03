@@ -13,7 +13,7 @@ import { UserAuth } from "../context/authContext";
 import { getMetadata } from "firebase/storage";
 import ImageModal from "../components/ImageModal";
 
-const ArtistPage = ({ commission }) => {
+const CommissionPage = ({ commission }) => {
   const title = commission.title;
   const description = commission.description;
   const { user } = UserAuth();
@@ -218,4 +218,4 @@ const ArtistPage = ({ commission }) => {
   );
 };
 
-export default ArtistPage;
+export default CommissionPage;
