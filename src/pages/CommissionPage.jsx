@@ -38,8 +38,10 @@ const CommissionPage = ({ commission }) => {
     setIsImageOpen(false);
   };
 
-  if (user && artistUID === user.uid) {
-    isOwner = true;
+  if (user) {
+    if (artistUID === user.uid) {
+      isOwner = true;
+    }
   }
 
   useEffect(() => {

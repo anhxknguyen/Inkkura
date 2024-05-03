@@ -136,7 +136,7 @@ const CommissionCard = ({ commission }) => {
             onClick={() => openModal(images[currentIndex])}
             src={images[currentIndex]}
           />
-          {user.uid === artistUID && (
+          {user && user.uid === artistUID && (
             <span className="absolute text-2xl border rounded-md border-rose-800 text-rose-200 bg-rose-50 top-4 right-4">
               <PaintbrushSVG />
             </span>

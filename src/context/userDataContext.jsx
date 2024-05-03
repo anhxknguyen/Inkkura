@@ -14,11 +14,13 @@ export const UserDataProvider = ({ children }) => {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        if (user && user.uid) {
-          const docRef = doc(db, "users", user.uid);
-          const docSnap = await getDoc(docRef);
-          if (docSnap.exists()) {
-            setUserData(docSnap.data());
+        if (user) {
+          if (user.uid) {
+            const docRef = doc(db, "users", user.uid);
+            const docSnap = await getDoc(docRef);
+            if (docSnap.exists()) {
+              setUserData(docSnap.data());
+            }
           }
         }
       } catch (error) {
