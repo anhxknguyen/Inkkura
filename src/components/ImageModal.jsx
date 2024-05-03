@@ -38,12 +38,13 @@ const ImageModal = ({ currIndex, images, onClose }) => {
   };
 
   return (
-    <div className="fixed top-0 left-0 z-50 flex items-center justify-center w-full h-full bg-black bg-opacity-75">
+    <div className="fixed top-0 left-0 z-50 flex items-center justify-center w-full h-full bg-black bg-opacity-75 cursor-default">
       <img
         ref={modalRef}
         src={images[currentIndex]}
         alt="Large Commission"
         className="max-w-full max-h-full no-select"
+        onClick={(e) => e.stopPropagation()}
       />
       <button
         className="absolute text-3xl text-white top-10 right-20"
@@ -55,7 +56,10 @@ const ImageModal = ({ currIndex, images, onClose }) => {
         <button
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
-          onClick={goToPreviousImage}
+          onClick={(e) => {
+            goToPreviousImage();
+            e.stopPropagation();
+          }}
           className="absolute z-10 w-16 h-16 transform -translate-y-1/2 bg-gray-200 border rounded-full modal-button left-10 top-1/2 hover:bg-gray-300"
         >
           &lt;
@@ -64,7 +68,10 @@ const ImageModal = ({ currIndex, images, onClose }) => {
 
       {images.length > 1 && (
         <button
-          onClick={goToNextImage}
+          onClick={(e) => {
+            goToNextImage();
+            e.stopPropagation();
+          }}
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
           className="absolute z-10 w-16 h-16 transform -translate-y-1/2 bg-gray-200 border rounded-full modal-button right-10 top-1/2 hover:bg-gray-300"

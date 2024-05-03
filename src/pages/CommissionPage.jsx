@@ -142,7 +142,7 @@ const CommissionPage = ({ commission }) => {
             </div>
             {isOwner && (
               <Link to={`/editcommission/${commission.id}`}>
-                <button className="px-4 py-2 bg-blue-200 rounded-md">
+                <button className="px-4 py-2 rounded-md bg-pink text-rose-800">
                   Edit
                 </button>
               </Link>

@@ -1,11 +1,13 @@
 import { db } from "../firebase";
 import { doc, getDoc } from "firebase/firestore";
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { ref, listAll, getDownloadURL, getMetadata } from "firebase/storage";
 import { storage } from "../firebase";
 import ImageModal from "./ImageModal";
 import { UserAuth } from "../context/authContext";
+import magnifyingGlass from "../assets/magnify.png";
+import magnifyingGlassHovered from "../assets/magnify-hover.png";
 import PaintbrushSVG from "../assets/PaintbrushSVG";
 
 const CommissionCard = ({ commission }) => {
@@ -20,8 +22,10 @@ const CommissionCard = ({ commission }) => {
   const deliveryTime = commission.deliveryTime;
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
+  const [isMagnifyHovered, setIsMagnifyHovered] = useState(false);
 
   const [isImageOpen, setIsImageOpen] = useState(false);
+  const navigate = useNavigate();
 
   const openModal = () => {
     setIsImageOpen(true);
@@ -124,7 +128,10 @@ const CommissionCard = ({ commission }) => {
   };
 
   return (
-    <div className={`rounded-md hover:bg-zinc-100 grid-item `}>
+    <div
+      onClick={() => navigate(`/commission/${commission.id}`)}
+      className={`rounded-md hover:bg-zinc-100 grid-item hover:cursor-pointer`}
+    >
       <div className="flex flex-col">
         <div
           className="relative flex flex-col w-full"
@@ -132,20 +139,30 @@ const CommissionCard = ({ commission }) => {
           onMouseLeave={() => setIsHovered(false)}
         >
           <img
-            className={`h-64 rounded-md p-2 ${isHovered ? "object-contain bg-zinc-300" : "object-cover hover:bg-zinc-100"} no-select hover:cursor-pointer`}
+            className={`h-64 rounded-md m-2 ${isHovered ? "object-contain bg-zinc-300" : "object-cover hover:bg-zinc-100"} no-select hover:cursor-pointer`}
             onClick={() => openModal(images[currentIndex])}
             src={images[currentIndex]}
           />
           {user && user.uid === artistUID && (
-            <span className="absolute text-2xl border rounded-md border-rose-800 text-rose-200 bg-rose-50 top-4 right-4">
-              <PaintbrushSVG />
-            </span>
+            <img
+              onMouseEnter={() => setIsMagnifyHovered(true)}
+              onMouseLeave={() => setIsMagnifyHovered(false)}
+              onClick={(e) => {
+                openModal(images[currentIndex]);
+                e.stopPropagation();
+              }}
+              className="absolute w-10 h-10 text-2xl top-4 right-4"
+              src={isMagnifyHovered ? magnifyingGlassHovered : magnifyingGlass}
+            />
           )}
 
           {images.length > 1 && (
             <button
-              onClick={goToPreviousImage}
-              className="absolute z-10 w-10 h-10 transform -translate-y-1/2 bg-gray-200 border rounded-full left-2 top-1/2 hover:bg-gray-300"
+              onClick={(e) => {
+                goToPreviousImage();
+                e.stopPropagation();
+              }}
+              className="absolute z-10 w-10 h-10 transform -translate-y-1/2 bg-gray-200 border rounded-full left-3 top-1/2 hover:bg-gray-300"
               style={{ display: isHovered ? "block" : "none" }}
             >
               &lt;
@@ -154,26 +171,45 @@ const CommissionCard = ({ commission }) => {
 
           {images.length > 1 && (
             <button
-              onClick={goToNextImage}
-              className="absolute z-10 w-10 h-10 transform -translate-y-1/2 bg-gray-200 border rounded-full right-2 top-1/2 hover:bg-gray-300"
+              onClick={(e) => {
+                goToNextImage();
+                e.stopPropagation();
+              }}
+              className="absolute z-10 w-10 h-10 transform -translate-y-1/2 bg-gray-200 border rounded-full right-3 top-1/2 hover:bg-gray-300"
               style={{ display: isHovered ? "block" : "none" }}
             >
               &gt;
             </button>
           )}
         </div>
-        <Link className="px-2 pb-2" to={`/commission/${commission.id}`}>
+        <div></div>
+        <div className="px-2 pb-2">
           <div className="flex items-center justify-between text-sm">
             <div>{artistDisplayName}</div>
             <div className="p-1 bg-green-200 rounded-md">
               ${priceRange[0]} - ${priceRange[1]}
             </div>
           </div>
-          <div className="font-medium text-md">{title}</div>
-          <div className="text-sm">
-            Estimated Completion: {deliveryTime} days
+          <div className="flex items-center justify-between">
+            <div className="flex flex-col">
+              <div className="font-medium text-md">{title}</div>
+              <div className="text-sm">
+                Estimated Completion: {deliveryTime} days
+              </div>
+            </div>
+            {user && user.uid === artistUID && (
+              <button
+                onClick={(e) => {
+                  navigate(`/editcommission/${commission.id}`);
+                  e.stopPropagation();
+                }}
+                className="px-4 py-1 rounded-md bg-pink hover:bg-rose-300 text-rose-800"
+              >
+                Edit
+              </button>
+            )}
           </div>
-        </Link>
+        </div>
       </div>
       {isImageOpen && (
         <ImageModal
