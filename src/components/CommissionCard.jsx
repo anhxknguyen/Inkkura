@@ -143,19 +143,16 @@ const CommissionCard = ({ commission }) => {
             onClick={() => openModal(images[currentIndex])}
             src={images[currentIndex]}
           />
-          {user && user.uid === artistUID && (
-            <img
-              onMouseEnter={() => setIsMagnifyHovered(true)}
-              onMouseLeave={() => setIsMagnifyHovered(false)}
-              onClick={(e) => {
-                openModal(images[currentIndex]);
-                e.stopPropagation();
-              }}
-              className="absolute w-10 h-10 text-2xl top-4 right-4"
-              src={isMagnifyHovered ? magnifyingGlassHovered : magnifyingGlass}
-            />
-          )}
-
+          <img
+            onMouseEnter={() => setIsMagnifyHovered(true)}
+            onMouseLeave={() => setIsMagnifyHovered(false)}
+            onClick={(e) => {
+              openModal(images[currentIndex]);
+              e.stopPropagation();
+            }}
+            className="absolute w-10 h-10 text-2xl top-4 right-4"
+            src={isMagnifyHovered ? magnifyingGlassHovered : magnifyingGlass}
+          />
           {images.length > 1 && (
             <button
               onClick={(e) => {
