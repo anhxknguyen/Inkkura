@@ -16,7 +16,7 @@ const Signin = () => {
     if (user && userData && userData.onboarded == false) {
       navigate("/onboarding");
     } else if (user) {
-      navigate("/");
+      navigate(-1);
     }
   }, [user]);
 

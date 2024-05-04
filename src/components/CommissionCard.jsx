@@ -10,7 +10,7 @@ import magnifyingGlass from "../assets/magnify.png";
 import magnifyingGlassHovered from "../assets/magnify-hover.png";
 import PaintbrushSVG from "../assets/PaintbrushSVG";
 
-const CommissionCard = ({ commission }) => {
+const CommissionCard = ({ commission, prevPath }) => {
   const { user } = UserAuth();
   const title = commission.title;
   const priceRange = commission.priceRange;
@@ -26,6 +26,7 @@ const CommissionCard = ({ commission }) => {
 
   const [isImageOpen, setIsImageOpen] = useState(false);
   const navigate = useNavigate();
+  const previousPath = prevPath ? prevPath : "/searchCommissions";
 
   const openModal = () => {
     setIsImageOpen(true);
@@ -129,7 +130,11 @@ const CommissionCard = ({ commission }) => {
 
   return (
     <div
-      onClick={() => navigate(`/commission/${commission.id}`)}
+      onClick={() =>
+        navigate(`/commission/${commission.id}`, {
+          state: { prevPath: previousPath },
+        })
+      }
       className={`rounded-md hover:bg-zinc-100 grid-item hover:cursor-pointer`}
     >
       <div className="flex flex-col">
@@ -138,11 +143,18 @@ const CommissionCard = ({ commission }) => {
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
         >
-          <img
-            className={`h-64 rounded-md m-2 ${isHovered ? "object-contain bg-zinc-300" : "object-cover hover:bg-zinc-100"} no-select hover:cursor-pointer`}
-            onClick={() => openModal(images[currentIndex])}
-            src={images[currentIndex]}
-          />
+          {images.length > 1 ? (
+            <img
+              className={`h-64 rounded-md m-2 ${isHovered ? "object-contain bg-zinc-300" : "object-cover hover:bg-zinc-100"} no-select hover:cursor-pointer`}
+              onClick={() => openModal(images[currentIndex])}
+              src={images[currentIndex]}
+            />
+          ) : (
+            <img
+              className={`h-64 rounded-md m-2 bg-zinc-400 no-select hover:cursor-pointer animate-pulse`}
+            />
+          )}
+
           <img
             onMouseEnter={() => setIsMagnifyHovered(true)}
             onMouseLeave={() => setIsMagnifyHovered(false)}

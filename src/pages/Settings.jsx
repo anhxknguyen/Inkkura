@@ -228,7 +228,11 @@ const Settings = () => {
             <div className="mx-10 grid-container">
               {userCommissionsList.map((commission) => {
                 return (
-                  <CommissionCard key={commission.id} commission={commission} />
+                  <CommissionCard
+                    key={commission.id}
+                    commission={commission}
+                    prevPath={"/accsettings"}
+                  />
                 );
               })}
             </div>

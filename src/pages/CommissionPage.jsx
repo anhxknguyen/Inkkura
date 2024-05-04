@@ -2,7 +2,7 @@ import Navbar from "../components/Navbar";
 import { useEffect, useState } from "react";
 import { db } from "../firebase";
 import { doc, getDoc } from "firebase/firestore";
-import { Link } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import DiscordSVG from "../assets/DiscordSVG";
 import EmailSVG from "../assets/EmailSVG";
 import TwitterSVG from "../assets/TwitterSVG";
@@ -13,7 +13,7 @@ import { UserAuth } from "../context/authContext";
 import { getMetadata } from "firebase/storage";
 import ImageModal from "../components/ImageModal";
 
-const CommissionPage = ({ commission }) => {
+const CommissionPage = ({ commission, prevPath }) => {
   const title = commission.title;
   const description = commission.description;
   const { user } = UserAuth();
@@ -29,6 +29,9 @@ const CommissionPage = ({ commission }) => {
   const [deliveryTime, setDeliveryTime] = commission.deliveryTime;
   const thumbnail = commission.thumbnail;
   const [isImageOpen, setIsImageOpen] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const previousPath = location.state ? location.state.prevPath : null;
 
   const openModal = () => {
     setIsImageOpen(true);
@@ -127,15 +130,26 @@ const CommissionPage = ({ commission }) => {
     );
   };
 
+  const handleBackButton = () => {
+    if (previousPath) {
+      navigate(previousPath);
+    } else {
+      navigate("/searchCommissions");
+    }
+  };
+
   return (
     <div className="h-full mb-32">
       <Navbar />
       <div className="flex items-center justify-start mx-10 text-lg h-4/5">
         <div className="flex-col w-full gap-10">
           <div className="flex items-center gap-5">
-            <Link className="text-xl" to="/searchcommissions">
+            <span
+              className="text-xl hover:cursor-pointer"
+              onClick={() => handleBackButton()}
+            >
               &lt;
-            </Link>
+            </span>
             <div className="text-4xl font-semibold">{title}</div>
             <div className="px-4 py-2 bg-green-200 rounded-md">
               ${priceRange[0]} - ${priceRange[1]}
@@ -178,12 +192,14 @@ const CommissionPage = ({ commission }) => {
                 id="preview"
                 className="relative border border-black rounded-md h-preview"
               >
-                {images.length > 0 && (
+                {images.length > 0 ? (
                   <img
                     src={images[currentIndex]}
                     className="object-contain w-full h-full no-select hover:cursor-pointer"
                     onClick={() => openModal(images[currentIndex])}
                   />
+                ) : (
+                  <img className="object-contain w-full h-full no-select hover:cursor-pointer bg-zinc-400 animate-pulse" />
                 )}
               </div>
             </div>

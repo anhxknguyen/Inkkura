@@ -30,7 +30,6 @@ const SearchCommissions = () => {
         console.error("Error getting commissions:", error);
       }
     };
-
     findAllCommissions();
   }, []);
 
